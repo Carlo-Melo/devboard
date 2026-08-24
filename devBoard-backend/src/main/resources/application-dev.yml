@@ -1,0 +1,8 @@
+logging:
+  level:
+    com.devboard: DEBUG
+    org.hibernate.SQL: DEBUG
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-only-secret-nao-usar-em-producao-precisa-ter-64-caracteres-no-minimo}

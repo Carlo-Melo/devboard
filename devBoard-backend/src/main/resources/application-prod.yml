@@ -1,0 +1,7 @@
+logging:
+  level:
+    com.devboard: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
