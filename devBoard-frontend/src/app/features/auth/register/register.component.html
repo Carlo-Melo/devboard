@@ -1,0 +1,74 @@
+<div class="register-page">
+  <div class="register-card" *ngIf="!registeredUser">
+    <h1>Criar conta no devBoard</h1>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" formControlName="username" autocomplete="username" />
+        <div class="field-error" *ngIf="f['username'].invalid && f['username'].touched">
+          <span *ngIf="f['username'].errors?.['required']">Username é obrigatório</span>
+          <span *ngIf="f['username'].errors?.['minlength'] || f['username'].errors?.['maxlength']">Username deve ter entre 3 e 50 caracteres</span>
+          <span *ngIf="f['username'].errors?.['pattern']">Apenas letras, números e underscore, sem espaços</span>
+          <span *ngIf="f['username'].errors?.['server']">{{ f['username'].errors?.['server'] }}</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" autocomplete="email" />
+        <div class="field-error" *ngIf="f['email'].invalid && f['email'].touched">
+          <span *ngIf="f['email'].errors?.['required']">Email é obrigatório</span>
+          <span *ngIf="f['email'].errors?.['email']">Email inválido</span>
+          <span *ngIf="f['email'].errors?.['server']">{{ f['email'].errors?.['server'] }}</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="fullName">Nome completo (opcional)</label>
+        <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+        <div class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
+          <span *ngIf="f['password'].errors?.['required']">Senha é obrigatória</span>
+          <span *ngIf="f['password'].errors?.['minlength'] || f['password'].errors?.['pattern']">
+            Mínimo 8 caracteres, com maiúscula, minúscula e número
+          </span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="confirmPassword">Confirmar senha</label>
+        <input id="confirmPassword" type="password" formControlName="confirmPassword" autocomplete="new-password" />
+        <div class="field-error" *ngIf="f['confirmPassword'].invalid && f['confirmPassword'].touched">
+          <span *ngIf="f['confirmPassword'].errors?.['required']">Confirmação de senha é obrigatória</span>
+          <span *ngIf="f['confirmPassword'].errors?.['passwordMismatch']">Senhas não coincidem</span>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Criando conta...' : 'Criar conta' }}
+      </button>
+    </form>
+  </div>
+
+  <div class="register-card success" *ngIf="registeredUser">
+    <h1>Conta criada com sucesso</h1>
+    <p>Bem-vindo(a), <strong>{{ registeredUser.fullName || registeredUser.username }}</strong>!</p>
+    <dl>
+      <dt>Username</dt>
+      <dd>{{ registeredUser.username }}</dd>
+      <dt>Email</dt>
+      <dd>{{ registeredUser.email }}</dd>
+      <dt>Origem</dt>
+      <dd>{{ registeredUser.authProvider }}</dd>
+    </dl>
+    <button type="button" (click)="registeredUser = null">Cadastrar outro usuário</button>
+  </div>
+</div>
