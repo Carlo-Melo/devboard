@@ -7,5 +7,6 @@
 
     <include file="db/changelog/V1__create_users_table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/V2__create_password_reset_tokens_table.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/V3__create_projects_tables.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
