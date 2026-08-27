@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { RegisterComponent } from './register.component';
 import { AuthService } from '../../../core/services/auth.service';
@@ -13,7 +14,7 @@ describe('RegisterComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [RegisterComponent],
-      providers: [{ provide: AuthService, useValue: authServiceSpy }]
+      providers: [{ provide: AuthService, useValue: authServiceSpy }, provideRouter([])]
     }).compileComponents();
   });
 

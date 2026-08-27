@@ -1,5 +1,5 @@
-<div class="register-page">
-  <div class="register-card" *ngIf="!registeredUser">
+<div class="auth-page">
+  <div class="auth-card" *ngIf="!registeredUser">
     <h1>Criar conta no devBoard</h1>
 
     <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
@@ -56,9 +56,11 @@
         {{ isLoading ? 'Criando conta...' : 'Criar conta' }}
       </button>
     </form>
+
+    <p class="switch-link">Já tem conta? <a routerLink="/login">Entrar</a></p>
   </div>
 
-  <div class="register-card success" *ngIf="registeredUser">
+  <div class="auth-card success" *ngIf="registeredUser">
     <h1>Conta criada com sucesso</h1>
     <p>Bem-vindo(a), <strong>{{ registeredUser.fullName || registeredUser.username }}</strong>!</p>
     <dl>

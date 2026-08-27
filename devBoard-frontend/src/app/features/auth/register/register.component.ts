@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiError } from '../../../core/models/api-error.model';
 import { UserResponse } from '../../../core/models/auth.models';
@@ -9,7 +10,7 @@ import { passwordMatchValidator } from '../../../shared/validators/password-matc
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
 })
@@ -32,7 +33,7 @@ export class RegisterComponent {
         confirmPassword: ['', Validators.required],
         fullName: ['']
       },
-      { validators: passwordMatchValidator }
+      { validators: passwordMatchValidator() }
     );
   }
 

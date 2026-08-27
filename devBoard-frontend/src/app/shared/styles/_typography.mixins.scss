@@ -1,0 +1,46 @@
+// Tokens tipográficos compostos (spec-design-system.md, secao 4.2).
+// Cores nao entram aqui - cada uso decide a cor via var(--color-*).
+
+@mixin text-display {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@mixin text-h1 {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+}
+
+@mixin text-h2 {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+@mixin text-body($weight: 400) {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: $weight;
+}
+
+@mixin text-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+@mixin text-micro {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+}
+
+@mixin text-group-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
