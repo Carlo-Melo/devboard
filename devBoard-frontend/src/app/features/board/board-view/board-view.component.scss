@@ -1,0 +1,44 @@
+@import '../../projects/projects-shared';
+
+.board-columns {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+}
+
+.board-column {
+  flex: 0 0 280px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+}
+
+.board-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.board-column-name {
+  @include text-h2;
+  color: var(--color-text-primary);
+}
+
+.board-column-body {
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.board-column-empty {
+  @include text-label;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-6) var(--space-2);
+}

@@ -1,0 +1,45 @@
+<div class="page">
+  <div class="page-container">
+
+    <div class="topbar">
+      <h1>Projetos</h1>
+      <div class="topbar-actions">
+        <div class="user-chip" *ngIf="currentUser">
+          <strong>{{ currentUser.fullName || currentUser.username }}</strong>
+          <span>{{ currentUser.email }}</span>
+        </div>
+        <button type="button" class="btn-ghost" (click)="logout()">Sair</button>
+        <a routerLink="/projects/new" class="btn-primary">Novo Projeto</a>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">Carregando projetos...</div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <ng-container *ngIf="!isLoading && !errorMessage">
+      <div class="empty-state" *ngIf="projects.length === 0">
+        Nenhum projeto ainda. Crie o primeiro para começar.
+      </div>
+
+      <div class="project-grid" *ngIf="projects.length > 0">
+        <a class="project-card" *ngFor="let project of projects" [routerLink]="['/projects', project.id]">
+          <h2>{{ project.name }}</h2>
+          <p>{{ project.description || 'Sem descrição' }}</p>
+          <div class="project-card-meta">
+            <span>{{ project.memberCount + 1 }} membro(s)</span>
+            <span class="pill pill-muted" *ngIf="!project.githubLinked">Sem GitHub</span>
+            <span class="pill" *ngIf="project.githubLinked">GitHub vinculado</span>
+          </div>
+        </a>
+      </div>
+
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button type="button" class="btn-ghost" [disabled]="page === 0" (click)="previousPage()">Anterior</button>
+        <span>Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button type="button" class="btn-ghost" [disabled]="page + 1 >= totalPages" (click)="nextPage()">Próxima</button>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

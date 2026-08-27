@@ -1,7 +1,8 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', redirectTo: 'projects', pathMatch: 'full' },
   {
     path: 'login',
     loadComponent: () =>
@@ -21,5 +22,35 @@ export const routes: Routes = [
     path: 'reset-password',
     loadComponent: () =>
       import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
+  },
+  {
+    path: 'projects',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/project-list/project-list.component').then(m => m.ProjectListComponent)
+  },
+  {
+    path: 'projects/new',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/project-form/project-form.component').then(m => m.ProjectFormComponent)
+  },
+  {
+    path: 'projects/:id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/project-form/project-form.component').then(m => m.ProjectFormComponent)
+  },
+  {
+    path: 'projects/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/projects/project-detail/project-detail.component').then(m => m.ProjectDetailComponent)
+  },
+  {
+    path: 'boards/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/board/board-view/board-view.component').then(m => m.BoardViewComponent)
   }
 ];

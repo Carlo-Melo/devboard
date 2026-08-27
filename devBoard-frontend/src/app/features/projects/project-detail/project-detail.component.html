@@ -1,0 +1,76 @@
+<div class="page">
+  <div class="page-container">
+
+    <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+
+    <div class="loading-state" *ngIf="isLoading">Carregando...</div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <ng-container *ngIf="project && !isLoading">
+      <div class="detail-header">
+        <div>
+          <h1>{{ project.name }}</h1>
+          <p>{{ project.description || 'Sem descrição' }}</p>
+        </div>
+        <div class="detail-actions">
+          <a [routerLink]="['/projects', project.id, 'edit']" class="btn-secondary" *ngIf="canEdit">Editar</a>
+          <button type="button" class="btn-danger" *ngIf="isOwner" [disabled]="isArchiving" (click)="archive()">
+            {{ isArchiving ? 'Arquivando...' : 'Arquivar' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="card">
+          <h2 class="card-heading">Quadros</h2>
+          <a class="member-row board-link" *ngFor="let board of project.boards" [routerLink]="['/boards', board.id]">
+            <div class="member-info">
+              <span>{{ board.name }}</span>
+              <span class="pill pill-muted" *ngIf="board.defaultBoard">Padrão</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="card">
+          <h2 class="card-heading">Detalhes</h2>
+          <div class="info-row">
+            <span>Dono</span>
+            <span>{{ project.owner.fullName || project.owner.username }}</span>
+          </div>
+          <div class="info-row">
+            <span>Seu papel</span>
+            <span>{{ project.currentUserRole }}</span>
+          </div>
+          <div class="info-row">
+            <span>GitHub</span>
+            <span>{{ project.githubRepoName || 'Não vinculado' }}</span>
+          </div>
+          <div class="info-row">
+            <span>Branch base</span>
+            <span>{{ project.defaultBaseBranch }}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-heading">Membros</h2>
+          <div class="member-row">
+            <div class="member-info">
+              <span class="avatar">{{ initials(project.owner.fullName || project.owner.username) }}</span>
+              <span>{{ project.owner.fullName || project.owner.username }}</span>
+            </div>
+            <span class="pill">DONO</span>
+          </div>
+          <div class="member-row" *ngFor="let member of project.members">
+            <div class="member-info">
+              <span class="avatar">{{ initials(member.user.fullName || member.user.username) }}</span>
+              <span>{{ member.user.fullName || member.user.username }}</span>
+            </div>
+            <span class="pill pill-muted">{{ member.role }}</span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

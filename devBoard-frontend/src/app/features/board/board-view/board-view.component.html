@@ -1,0 +1,32 @@
+<div class="page">
+  <div class="page-container page-container-wide">
+
+    <div class="loading-state" *ngIf="isLoading">Carregando quadro...</div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <ng-container *ngIf="board && !isLoading">
+      <a [routerLink]="['/projects', board.projectId]" class="back-link">&larr; Voltar ao projeto</a>
+
+      <div class="topbar">
+        <h1>{{ board.name }}</h1>
+      </div>
+
+      <div class="board-columns">
+        <div class="board-column" *ngFor="let column of board.columns">
+          <div class="board-column-header">
+            <span class="board-column-name">{{ column.name }}</span>
+            <span class="pill" [class.pill-danger]="isOverWip(column.taskCount, column.wipLimit)">
+              {{ column.taskCount }}{{ column.wipLimit ? ' / ' + column.wipLimit : '' }}
+            </span>
+          </div>
+
+          <div class="board-column-body">
+            <div class="board-column-empty">Nenhuma tarefa ainda</div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

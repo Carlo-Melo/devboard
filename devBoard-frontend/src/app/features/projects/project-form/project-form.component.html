@@ -1,0 +1,40 @@
+<div class="page">
+  <div class="page-container page-container-narrow">
+
+    <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+
+    <div class="card">
+      <h1 class="card-title">{{ isEditMode ? 'Editar projeto' : 'Novo projeto' }}</h1>
+
+      <div class="loading-state" *ngIf="isLoading">Carregando...</div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate *ngIf="!isLoading">
+
+        <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <div class="field">
+          <label for="name">Nome do projeto</label>
+          <input id="name" type="text" formControlName="name" autocomplete="off" />
+          <div class="field-error" *ngIf="f['name'].invalid && f['name'].touched">
+            <span *ngIf="f['name'].errors?.['required']">Nome é obrigatório</span>
+            <span *ngIf="f['name'].errors?.['minlength']">Nome deve ter no mínimo 3 caracteres</span>
+            <span *ngIf="f['name'].errors?.['server']">{{ f['name'].errors?.['server'] }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="description">Descrição</label>
+          <textarea id="description" formControlName="description"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+          <a routerLink="/projects" class="btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
