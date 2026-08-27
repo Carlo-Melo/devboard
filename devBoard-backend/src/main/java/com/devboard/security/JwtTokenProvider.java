@@ -1,8 +1,11 @@
 package com.devboard.security;
 
 import com.devboard.entity.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Optional;
 
+@Slf4j
 @Component
 public class JwtTokenProvider {
 
@@ -40,5 +45,24 @@ public class JwtTokenProvider {
 
     public LocalDateTime resolveExpiration() {
         return LocalDateTime.now(ZoneId.systemDefault()).plusNanos(expirationMs * 1_000_000L);
+    }
+
+    /** Retorna vazio se o token estiver ausente, malformado, com assinatura inválida ou expirado. */
+    public Optional<Claims> parseClaims(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return Optional.of(claims);
+        } catch (JwtException | IllegalArgumentException ex) {
+            log.debug("Token JWT inválido: {}", ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    public Long getUserId(Claims claims) {
+        return claims.get("userId", Long.class);
     }
 }

@@ -1,9 +1,15 @@
 package com.devboard.config;
 
+import com.devboard.repository.UserRepository;
+import com.devboard.security.JwtAuthenticationEntryPoint;
+import com.devboard.security.JwtAuthenticationFilter;
+import com.devboard.security.JwtTokenProvider;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,18 +22,31 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
+
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
 
+    /**
+     * Bean explícito (não {@code @Component}) para não ser também registrado pelo Spring
+     * Boot como filtro de servlet global — só deve rodar dentro da cadeia do Spring Security.
+     */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                                            UserRepository userRepository) {
+        return new JwtAuthenticationFilter(jwtTokenProvider, userRepository);
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -43,6 +62,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable);
 
