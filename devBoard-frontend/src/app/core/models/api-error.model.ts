@@ -8,3 +8,8 @@ export interface ApiError {
   message: string;
   fieldErrors?: FieldErrorItem[];
 }
+
+export interface MessageResponse {
+  success: boolean;
+  message: string;
+}

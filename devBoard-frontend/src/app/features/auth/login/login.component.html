@@ -1,0 +1,33 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>Entrar no devBoard</h1>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+
+      <div class="field">
+        <label for="emailOrUsername">Email ou username</label>
+        <input id="emailOrUsername" type="text" formControlName="emailOrUsername" autocomplete="username" />
+        <div class="field-error" *ngIf="f['emailOrUsername'].invalid && f['emailOrUsername'].touched">
+          <span *ngIf="f['emailOrUsername'].errors?.['required']">Email ou username é obrigatório</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+        <div class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
+          <span *ngIf="f['password'].errors?.['required']">Senha é obrigatória</span>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="isLoading">
+        {{ isLoading ? 'Entrando...' : 'Entrar' }}
+      </button>
+    </form>
+
+    <p class="switch-link"><a routerLink="/forgot-password">Esqueci minha senha</a></p>
+    <p class="switch-link">Não tem conta? <a routerLink="/register">Criar conta</a></p>
+  </div>
+</div>

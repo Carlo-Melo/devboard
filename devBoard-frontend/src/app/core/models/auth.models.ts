@@ -23,3 +23,34 @@ export interface AuthResponse {
   expiresAt: string;
   user: UserResponse;
 }
+
+export interface LoginRequest {
+  emailOrUsername: string;
+  password: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  fullName?: string;
+  avatarUrl?: string;
+}
+
+export interface TokenValidationResponse {
+  valid: boolean;
+  expiresAt?: string;
+}
