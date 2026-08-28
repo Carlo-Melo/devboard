@@ -12,17 +12,182 @@
         <h1>{{ board.name }}</h1>
       </div>
 
-      <div class="board-columns">
+      <div class="board-filters">
+        <input
+          type="text"
+          class="board-filter-search"
+          placeholder="Buscar por título..."
+          [(ngModel)]="search"
+          (change)="onFilterChange()" />
+
+        <select [(ngModel)]="typeFilter" (change)="onFilterChange()">
+          <option value="">Todos os tipos</option>
+          <option value="DEV">Dev</option>
+          <option value="QA">QA</option>
+          <option value="DESIGN">Design</option>
+          <option value="DOCUMENTATION">Documentação</option>
+          <option value="OPERATIONAL">Operacional</option>
+          <option value="OTHER">Outro</option>
+        </select>
+
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">Todas as prioridades</option>
+          <option value="LOW">Baixa</option>
+          <option value="MEDIUM">Média</option>
+          <option value="HIGH">Alta</option>
+          <option value="URGENT">Urgente</option>
+        </select>
+      </div>
+
+      <div class="board-columns" cdkDropListGroup>
         <div class="board-column" *ngFor="let column of board.columns">
           <div class="board-column-header">
-            <span class="board-column-name">{{ column.name }}</span>
-            <span class="pill" [class.pill-danger]="isOverWip(column.taskCount, column.wipLimit)">
-              {{ column.taskCount }}{{ column.wipLimit ? ' / ' + column.wipLimit : '' }}
-            </span>
+            <ng-container *ngIf="editingColumnId !== column.id">
+              <span class="board-column-name">{{ column.name }}</span>
+              <div class="board-column-header-actions">
+                <span class="pill" [class.pill-danger]="isOverWip(column.taskCount, column.wipLimit)">
+                  {{ column.taskCount }}{{ column.wipLimit ? ' / ' + column.wipLimit : '' }}
+                </span>
+                <button class="icon-btn" title="Editar coluna" (click)="startEditColumn(column)">Editar</button>
+                <button class="icon-btn icon-btn-danger" title="Excluir coluna" (click)="startDeleteColumn(column)">Excluir</button>
+              </div>
+            </ng-container>
+            <span class="board-column-name" *ngIf="editingColumnId === column.id">Editar coluna</span>
           </div>
 
-          <div class="board-column-body">
-            <div class="board-column-empty">Nenhuma tarefa ainda</div>
+          <div class="column-edit-form" *ngIf="editingColumnId === column.id">
+            <div class="field">
+              <label for="col-name-{{ column.id }}">Nome</label>
+              <input id="col-name-{{ column.id }}" type="text" [(ngModel)]="editColumnForm.name" />
+            </div>
+            <div class="field">
+              <label for="col-role-{{ column.id }}">Papel semântico</label>
+              <select id="col-role-{{ column.id }}" [(ngModel)]="editColumnForm.role">
+                <option *ngFor="let role of columnRoles" [value]="role">{{ role }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="col-color-{{ column.id }}">Cor</label>
+                <input id="col-color-{{ column.id }}" type="text" placeholder="#6B7280" [(ngModel)]="editColumnForm.color" />
+              </div>
+              <div class="field">
+                <label for="col-wip-{{ column.id }}">Limite WIP</label>
+                <input id="col-wip-{{ column.id }}" type="number" min="0" [(ngModel)]="editColumnForm.wipLimit" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-primary" [disabled]="isSavingColumn" (click)="submitEditColumn(column)">Salvar</button>
+              <button class="btn-ghost" [disabled]="isSavingColumn" (click)="cancelEditColumn()">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="column-delete-confirm" *ngIf="deletingColumnId === column.id">
+            <p>Excluir a coluna "{{ column.name }}"?</p>
+            <div class="field" *ngIf="column.taskCount > 0">
+              <label>Esta coluna tem {{ column.taskCount }} tarefa(s) — escolha o destino:</label>
+              <select [(ngModel)]="deleteMoveTargetId">
+                <option [ngValue]="null">Selecione uma coluna...</option>
+                <option *ngFor="let other of otherColumns(column)" [ngValue]="other.id">{{ other.name }}</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button
+                class="btn-danger"
+                [disabled]="isSavingColumn || (column.taskCount > 0 && deleteMoveTargetId === null)"
+                (click)="confirmDeleteColumn(column)">
+                Confirmar exclusão
+              </button>
+              <button class="btn-ghost" [disabled]="isSavingColumn" (click)="cancelDeleteColumn()">Cancelar</button>
+            </div>
+          </div>
+
+          <div
+            class="board-column-body"
+            *ngIf="editingColumnId !== column.id && deletingColumnId !== column.id"
+            cdkDropList
+            [id]="columnDropListId(column.id)"
+            [cdkDropListData]="column.tasks"
+            [cdkDropListConnectedTo]="connectedDropLists()"
+            [cdkDropListEnterPredicate]="canEnterColumn(column)"
+            (cdkDropListDropped)="drop($event, column)">
+
+            <div
+              class="task-card"
+              *ngFor="let task of column.tasks"
+              cdkDrag
+              (click)="goToTask(task.id)">
+              <div class="task-card-top">
+                <span class="pill" [ngClass]="priorityClass(task.priority)">{{ priorityLabel(task.priority) }}</span>
+                <span class="pill pill-muted">{{ typeLabel(task.type) }}</span>
+                <button class="task-delete-btn" title="Arquivar tarefa" (click)="archiveTask(column, task, $event)">&times;</button>
+              </div>
+              <p class="task-card-title">{{ task.title }}</p>
+              <div class="task-card-footer">
+                <span class="task-card-due" *ngIf="task.dueDate">{{ task.dueDate | date:'dd/MM' }}</span>
+                <span class="task-card-comments" *ngIf="task.commentCount" title="Comentários">{{ task.commentCount }}</span>
+                <span class="avatar avatar-sm" *ngIf="task.assignee" [title]="task.assignee.username">
+                  {{ initials(task.assignee.username) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="board-column-empty" *ngIf="column.tasks.length === 0 && addingToColumnId !== column.id">
+              Nenhuma tarefa ainda
+            </div>
+
+            <div class="task-add-form" *ngIf="addingToColumnId === column.id">
+              <input
+                type="text"
+                placeholder="Título da tarefa"
+                [(ngModel)]="newTaskTitle"
+                (keydown.enter)="submitAddTask(column)"
+                (keydown.escape)="cancelAddTask()" />
+              <div class="task-add-actions">
+                <button class="btn-primary" (click)="submitAddTask(column)" [disabled]="isCreatingTask">Adicionar</button>
+                <button class="btn-ghost" (click)="cancelAddTask()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="btn-ghost add-task-trigger"
+            *ngIf="editingColumnId !== column.id && deletingColumnId !== column.id && addingToColumnId !== column.id"
+            (click)="startAddTask(column.id)">
+            + Nova tarefa
+          </button>
+        </div>
+
+        <div class="board-column board-column-add">
+          <button class="btn-ghost add-column-trigger" *ngIf="!isAddingColumn" (click)="startAddColumn()">
+            + Nova coluna
+          </button>
+
+          <div class="column-edit-form" *ngIf="isAddingColumn">
+            <div class="field">
+              <label for="new-col-name">Nome</label>
+              <input id="new-col-name" type="text" placeholder="Nome da coluna" [(ngModel)]="newColumnForm.name" />
+            </div>
+            <div class="field">
+              <label for="new-col-role">Papel semântico</label>
+              <select id="new-col-role" [(ngModel)]="newColumnForm.role">
+                <option *ngFor="let role of columnRoles" [value]="role">{{ role }}</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="new-col-color">Cor</label>
+                <input id="new-col-color" type="text" placeholder="#6B7280" [(ngModel)]="newColumnForm.color" />
+              </div>
+              <div class="field">
+                <label for="new-col-wip">Limite WIP</label>
+                <input id="new-col-wip" type="number" min="0" [(ngModel)]="newColumnForm.wipLimit" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-primary" [disabled]="isSavingColumn" (click)="submitAddColumn()">Criar</button>
+              <button class="btn-ghost" [disabled]="isSavingColumn" (click)="cancelAddColumn()">Cancelar</button>
+            </div>
           </div>
         </div>
       </div>

@@ -208,6 +208,11 @@
     background: var(--color-danger-100);
     color: var(--color-danger);
   }
+
+  &.pill-warning {
+    background: rgba(255, 176, 32, 0.14);
+    color: var(--color-warning);
+  }
 }
 
 .empty-state {
@@ -271,6 +276,12 @@
     resize: vertical;
     min-height: 96px;
   }
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
 }
 
 .field-error {

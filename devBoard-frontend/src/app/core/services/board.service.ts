@@ -10,7 +10,15 @@ import {
   UpdateBoardRequest,
   UpdateColumnRequest
 } from '../models/board.models';
+import { TaskPriority, TaskType } from '../models/task.models';
 import { environment } from '../../../environments/environment';
+
+export interface BoardViewFilters {
+  assigneeId?: number;
+  priority?: TaskPriority;
+  type?: TaskType;
+  search?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class BoardService {
@@ -27,8 +35,21 @@ export class BoardService {
     return this.http.post<BoardResponse>(`${this.apiUrl}/projects/${projectId}/boards`, request);
   }
 
-  getById(boardId: number): Observable<BoardResponse> {
-    return this.http.get<BoardResponse>(`${this.apiUrl}/boards/${boardId}`);
+  getById(boardId: number, filters?: BoardViewFilters): Observable<BoardResponse> {
+    let params = new HttpParams();
+    if (filters?.assigneeId !== undefined) {
+      params = params.set('assigneeId', filters.assigneeId);
+    }
+    if (filters?.priority) {
+      params = params.set('priority', filters.priority);
+    }
+    if (filters?.type) {
+      params = params.set('type', filters.type);
+    }
+    if (filters?.search) {
+      params = params.set('search', filters.search);
+    }
+    return this.http.get<BoardResponse>(`${this.apiUrl}/boards/${boardId}`, { params });
   }
 
   update(boardId: number, request: UpdateBoardRequest): Observable<BoardResponse> {

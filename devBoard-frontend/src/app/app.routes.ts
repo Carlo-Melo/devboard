@@ -52,5 +52,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/board/board-view/board-view.component').then(m => m.BoardViewComponent)
+  },
+  {
+    path: 'tasks/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/board/task-detail/task-detail.component').then(m => m.TaskDetailComponent)
   }
 ];

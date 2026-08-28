@@ -1,3 +1,5 @@
+import { TaskSummaryResponse } from './task.models';
+
 export type ColumnRole = 'BACKLOG' | 'TODO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'DONE' | 'NONE';
 
 export interface BoardColumnResponse {
@@ -8,6 +10,7 @@ export interface BoardColumnResponse {
   role: ColumnRole;
   wipLimit?: number;
   taskCount: number;
+  tasks: TaskSummaryResponse[];
 }
 
 export interface BoardResponse {
