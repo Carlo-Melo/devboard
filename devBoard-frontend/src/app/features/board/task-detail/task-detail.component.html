@@ -1,0 +1,195 @@
+<div class="page">
+  <div class="page-container page-container-wide">
+
+    <div class="loading-state" *ngIf="isLoading">Carregando tarefa...</div>
+
+    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+    <ng-container *ngIf="task && !isLoading">
+      <a [routerLink]="['/boards', task.boardId]" class="back-link">&larr; Voltar ao quadro</a>
+
+      <div class="detail-header">
+        <div>
+          <span class="task-id">#{{ task.id }}</span>
+          <h1>{{ task.title }}</h1>
+          <div class="task-badges">
+            <span class="pill" [ngClass]="priorityClass(task.priority)">{{ priorityLabel(task.priority) }}</span>
+            <span class="pill pill-muted">{{ typeLabel(task.type) }}</span>
+            <span class="pill pill-muted">{{ task.columnName }}</span>
+            <span class="pill pill-danger" *ngIf="task.archived">Arquivada</span>
+          </div>
+        </div>
+        <div class="detail-actions" *ngIf="!task.archived">
+          <button class="btn-secondary" *ngIf="!isEditing" (click)="startEdit()">Editar</button>
+          <button class="btn-danger" [disabled]="isArchiving" (click)="archive()">Arquivar</button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-main">
+
+          <div class="card" *ngIf="!isEditing">
+            <p class="task-description" *ngIf="task.description">{{ task.description }}</p>
+            <p class="task-description task-description-empty" *ngIf="!task.description">Sem descrição.</p>
+          </div>
+
+          <div class="card task-edit-form" *ngIf="isEditing">
+            <div class="field">
+              <label for="title">Título</label>
+              <input id="title" type="text" [(ngModel)]="editForm.title" />
+            </div>
+
+            <div class="field">
+              <label for="description">Descrição</label>
+              <textarea id="description" [(ngModel)]="editForm.description"></textarea>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="type">Tipo</label>
+                <select id="type" [(ngModel)]="editForm.type">
+                  <option value="DEV">Dev</option>
+                  <option value="QA">QA</option>
+                  <option value="DESIGN">Design</option>
+                  <option value="DOCUMENTATION">Documentação</option>
+                  <option value="OPERATIONAL">Operacional</option>
+                  <option value="OTHER">Outro</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="priority">Prioridade</label>
+                <select id="priority" [(ngModel)]="editForm.priority">
+                  <option value="LOW">Baixa</option>
+                  <option value="MEDIUM">Média</option>
+                  <option value="HIGH">Alta</option>
+                  <option value="URGENT">Urgente</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="dueDate">Prazo</label>
+                <input id="dueDate" type="date" [(ngModel)]="editForm.dueDate" />
+              </div>
+
+              <div class="field">
+                <label for="estimate">Estimativa (pontos)</label>
+                <input id="estimate" type="number" min="0" [(ngModel)]="editForm.estimate" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="assignee">Responsável</label>
+              <select id="assignee" [(ngModel)]="editForm.assigneeId">
+                <option [ngValue]="null">Sem responsável</option>
+                <option *ngFor="let member of projectMembers" [ngValue]="member.user.id">{{ member.user.username }}</option>
+              </select>
+            </div>
+
+            <div class="field" *ngIf="projectMembers.length">
+              <label>Co-responsáveis</label>
+              <div class="checkbox-list">
+                <label class="checkbox-item" *ngFor="let member of projectMembers">
+                  <input
+                    type="checkbox"
+                    [checked]="editForm.collaboratorIds.includes(member.user.id)"
+                    (change)="toggleCollaborator(member.user.id)" />
+                  {{ member.user.username }}
+                </label>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-primary" [disabled]="isSaving" (click)="saveEdit()">Salvar</button>
+              <button class="btn-ghost" [disabled]="isSaving" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </div>
+
+          <div class="card comments-card">
+            <h2 class="card-heading">Comentários</h2>
+
+            <div class="comment" *ngFor="let comment of task.comments">
+              <div class="comment-header">
+                <span class="avatar">{{ initials(comment.author.username) }}</span>
+                <div>
+                  <strong>{{ comment.author.username }}</strong>
+                  <span class="comment-meta">
+                    {{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                    <span *ngIf="comment.edited">(editado)</span>
+                  </span>
+                </div>
+                <div class="comment-actions" *ngIf="isMine(comment) && editingCommentId !== comment.id">
+                  <button class="btn-ghost" (click)="startEditComment(comment)">Editar</button>
+                  <button class="btn-ghost" (click)="deleteComment(comment)">Excluir</button>
+                </div>
+              </div>
+
+              <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
+
+              <div class="comment-edit" *ngIf="editingCommentId === comment.id">
+                <textarea [(ngModel)]="editingCommentContent"></textarea>
+                <div class="form-actions">
+                  <button class="btn-primary" (click)="saveEditComment(comment)">Salvar</button>
+                  <button class="btn-ghost" (click)="cancelEditComment()">Cancelar</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="empty-state" *ngIf="task.comments.length === 0">Nenhum comentário ainda.</div>
+
+            <div class="comment-form">
+              <textarea placeholder="Escreva um comentário..." [(ngModel)]="newCommentContent"></textarea>
+              <button class="btn-primary" [disabled]="isSubmittingComment" (click)="addComment()">Comentar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-side">
+          <div class="card">
+            <h2 class="card-heading">Detalhes</h2>
+            <div class="info-row">
+              <span>Responsável</span>
+              <span>{{ task.assignee?.username ?? 'Nenhum' }}</span>
+            </div>
+            <div class="info-row" *ngIf="task.collaborators.length">
+              <span>Co-responsáveis</span>
+              <span>{{ task.collaborators.length }}</span>
+            </div>
+            <div class="info-row">
+              <span>Criador</span>
+              <span>{{ task.creator.username }}</span>
+            </div>
+            <div class="info-row" *ngIf="task.dueDate">
+              <span>Prazo</span>
+              <span>{{ task.dueDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="info-row" *ngIf="task.estimate !== undefined && task.estimate !== null">
+              <span>Estimativa</span>
+              <span>{{ task.estimate }} pts</span>
+            </div>
+            <div class="info-row" *ngIf="task.completedAt">
+              <span>Concluída em</span>
+              <span>{{ task.completedAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="info-row">
+              <span>Criada em</span>
+              <span>{{ task.createdAt | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2 class="card-heading">Atividade</h2>
+            <div class="activity-item" *ngFor="let activity of task.activities">
+              <p>{{ activityDescription(activity) }}</p>
+              <span class="activity-date">{{ activity.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="empty-state" *ngIf="task.activities.length === 0">Sem atividade registrada ainda.</div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>
