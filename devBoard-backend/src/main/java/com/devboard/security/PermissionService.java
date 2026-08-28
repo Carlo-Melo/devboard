@@ -2,6 +2,7 @@ package com.devboard.security;
 
 import com.devboard.entity.Project;
 import com.devboard.entity.ProjectMember;
+import com.devboard.entity.Task;
 import com.devboard.entity.enums.ProjectRole;
 import com.devboard.exception.ResourceNotFoundException;
 import com.devboard.repository.ProjectMemberRepository;
@@ -64,5 +65,31 @@ public class PermissionService {
         if (!isOwner(projectId, userId)) {
             throw new AccessDeniedException("Apenas o dono do projeto pode realizar esta ação");
         }
+    }
+
+    /**
+     * Regra "developer só edita a própria tarefa" (spec-tasks.md 6): dono e admin editam qualquer
+     * tarefa; developer só a que criou ou à qual está atribuído; viewer nunca. Mesma regra vale
+     * para arquivamento (spec-tasks.md 4.5: criador, responsável, dono ou admin).
+     */
+    public void requireTaskEditable(Task task, Long userId) {
+        Long projectId = task.resolveProjectId();
+        ProjectRole role = resolveRole(projectId, userId);
+
+        if (role == null) {
+            throw new ResourceNotFoundException("Tarefa não encontrada");
+        }
+        if (role.atLeast(ProjectRole.ADMIN)) {
+            return;
+        }
+        if (role == ProjectRole.DEVELOPER) {
+            boolean isCreator = task.getCreator().getId().equals(userId);
+            boolean isAssignee = task.getAssignee() != null && task.getAssignee().getId().equals(userId);
+            if (isCreator || isAssignee) {
+                return;
+            }
+        }
+
+        throw new AccessDeniedException("Você não tem permissão para esta ação");
     }
 }
