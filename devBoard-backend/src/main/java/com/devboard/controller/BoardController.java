@@ -3,6 +3,8 @@ package com.devboard.controller;
 import com.devboard.dto.board.BoardResponse;
 import com.devboard.dto.board.CreateBoardRequest;
 import com.devboard.dto.board.UpdateBoardRequest;
+import com.devboard.entity.enums.TaskPriority;
+import com.devboard.entity.enums.TaskType;
 import com.devboard.security.SecurityUser;
 import com.devboard.service.BoardService;
 import jakarta.validation.Valid;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -42,8 +45,12 @@ public class BoardController {
 
     @GetMapping("/api/boards/{boardId}")
     public ResponseEntity<BoardResponse> getById(@PathVariable Long boardId,
+                                                  @RequestParam(required = false) Long assigneeId,
+                                                  @RequestParam(required = false) TaskPriority priority,
+                                                  @RequestParam(required = false) TaskType type,
+                                                  @RequestParam(required = false) String search,
                                                   @AuthenticationPrincipal SecurityUser user) {
-        return ResponseEntity.ok(boardService.getBoardView(boardId, user.getId()));
+        return ResponseEntity.ok(boardService.getBoardView(boardId, user.getId(), assigneeId, priority, type, search));
     }
 
     @PutMapping("/api/boards/{boardId}")

@@ -10,6 +10,7 @@ import com.devboard.dto.board.UpdateColumnRequest;
 import com.devboard.entity.Board;
 import com.devboard.entity.BoardColumn;
 import com.devboard.entity.Project;
+import com.devboard.entity.Task;
 import com.devboard.entity.User;
 import com.devboard.entity.enums.ColumnRole;
 import com.devboard.entity.enums.ProjectRole;
@@ -20,6 +21,8 @@ import com.devboard.mapper.BoardMapper;
 import com.devboard.repository.BoardColumnRepository;
 import com.devboard.repository.BoardRepository;
 import com.devboard.repository.ProjectRepository;
+import com.devboard.repository.TaskCommentRepository;
+import com.devboard.repository.TaskRepository;
 import com.devboard.security.PermissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,12 +35,14 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -54,6 +59,12 @@ class BoardServiceTest {
 
     @Mock
     private ProjectRepository projectRepository;
+
+    @Mock
+    private TaskRepository taskRepository;
+
+    @Mock
+    private TaskCommentRepository taskCommentRepository;
 
     @Mock
     private PermissionService permissionService;
@@ -76,6 +87,8 @@ class BoardServiceTest {
         project.setOwner(owner);
 
         lenient().when(boardMapper.toResponse(any(Board.class), anyList()))
+                .thenAnswer(invocation -> BoardResponse.builder().id(((Board) invocation.getArgument(0)).getId()).build());
+        lenient().when(boardMapper.toResponse(any(Board.class), anyList(), anyMap(), anyMap()))
                 .thenAnswer(invocation -> BoardResponse.builder().id(((Board) invocation.getArgument(0)).getId()).build());
         lenient().when(boardMapper.toColumnResponse(any(BoardColumn.class)))
                 .thenAnswer(invocation -> {
@@ -178,6 +191,30 @@ class BoardServiceTest {
 
         assertThat(response.getId()).isEqualTo(101L);
         verify(permissionService).requireRole(20L, 1L, ProjectRole.VIEWER);
+    }
+
+    @Test
+    void getBoardView_deveAgruparTarefasPorColuna_comUmaUnicaConsulta() {
+        Board board = board(101L);
+        BoardColumn backlog = column(1L, board, "Backlog", 0, ColumnRole.BACKLOG);
+        BoardColumn todo = column(2L, board, "To-Do", 1, ColumnRole.TODO);
+        Task taskInBacklog = new Task();
+        taskInBacklog.setId(500L);
+        taskInBacklog.setColumn(backlog);
+
+        when(boardRepository.findById(101L)).thenReturn(Optional.of(board));
+        when(boardColumnRepository.findByBoardIdOrderByPositionAsc(101L)).thenReturn(List.of(backlog, todo));
+        when(taskRepository.findByColumnIdInAndArchivedFalseOrderByPosition(List.of(1L, 2L)))
+                .thenReturn(List.of(taskInBacklog));
+
+        ArgumentCaptor<Map> tasksByColumnCaptor = ArgumentCaptor.forClass(Map.class);
+        boardService.getBoardView(101L, 1L);
+
+        verify(boardMapper).toResponse(any(Board.class), anyList(), tasksByColumnCaptor.capture(), anyMap());
+        Map<Long, List<Task>> tasksByColumn = tasksByColumnCaptor.getValue();
+        assertThat(tasksByColumn.get(1L)).containsExactly(taskInBacklog);
+        assertThat(tasksByColumn.get(2L)).isNull();
+        verify(taskRepository).findByColumnIdInAndArchivedFalseOrderByPosition(List.of(1L, 2L));
     }
 
     @Test
@@ -372,6 +409,51 @@ class BoardServiceTest {
         verify(boardColumnRepository).delete(column1);
         assertThat(column0.getPosition()).isEqualTo(0);
         assertThat(column2.getPosition()).isEqualTo(1);
+    }
+
+    @Test
+    void deleteColumn_deveLancarConflict_quandoTemTarefasESemDestino() {
+        Board board = board(101L);
+        BoardColumn column = column(1L, board, "Backlog", 0, ColumnRole.BACKLOG);
+        Task task = new Task();
+        task.setId(500L);
+        task.setColumn(column);
+
+        when(boardColumnRepository.findById(1L)).thenReturn(Optional.of(column));
+        when(boardColumnRepository.countByBoardId(101L)).thenReturn(2L);
+        when(taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(1L)).thenReturn(List.of(task));
+
+        assertThatThrownBy(() -> boardService.deleteColumn(1L, null, 1L))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void deleteColumn_deveMoverTarefas_quandoDestinoInformado() {
+        Board board = board(101L);
+        BoardColumn origin = column(1L, board, "Backlog", 0, ColumnRole.BACKLOG);
+        BoardColumn target = column(2L, board, "To-Do", 1, ColumnRole.TODO);
+        Task taskToMove = new Task();
+        taskToMove.setId(500L);
+        taskToMove.setColumn(origin);
+        Task existingInTarget = new Task();
+        existingInTarget.setId(600L);
+        existingInTarget.setColumn(target);
+        existingInTarget.setPosition(0);
+
+        when(boardColumnRepository.findById(1L)).thenReturn(Optional.of(origin));
+        when(boardColumnRepository.findById(2L)).thenReturn(Optional.of(target));
+        when(boardColumnRepository.countByBoardId(101L)).thenReturn(2L);
+        when(taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(1L)).thenReturn(List.of(taskToMove));
+        when(taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(2L)).thenReturn(List.of(existingInTarget));
+        when(boardColumnRepository.findByBoardIdOrderByPositionAsc(101L))
+                .thenReturn(new ArrayList<>(List.of(origin, target)));
+
+        boardService.deleteColumn(1L, 2L, 1L);
+
+        assertThat(taskToMove.getColumn()).isEqualTo(target);
+        assertThat(taskToMove.getPosition()).isEqualTo(1);
+        verify(taskRepository).saveAll(List.of(taskToMove));
+        verify(boardColumnRepository).delete(origin);
     }
 
     // ---- reorderColumns ----

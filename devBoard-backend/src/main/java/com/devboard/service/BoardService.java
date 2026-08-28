@@ -11,8 +11,11 @@ import com.devboard.dto.board.UpdateColumnRequest;
 import com.devboard.entity.Board;
 import com.devboard.entity.BoardColumn;
 import com.devboard.entity.Project;
+import com.devboard.entity.Task;
 import com.devboard.entity.enums.ColumnRole;
 import com.devboard.entity.enums.ProjectRole;
+import com.devboard.entity.enums.TaskPriority;
+import com.devboard.entity.enums.TaskType;
 import com.devboard.exception.ConflictException;
 import com.devboard.exception.InvalidRequestException;
 import com.devboard.exception.ResourceNotFoundException;
@@ -20,6 +23,8 @@ import com.devboard.mapper.BoardMapper;
 import com.devboard.repository.BoardColumnRepository;
 import com.devboard.repository.BoardRepository;
 import com.devboard.repository.ProjectRepository;
+import com.devboard.repository.TaskCommentRepository;
+import com.devboard.repository.TaskRepository;
 import com.devboard.security.PermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -51,6 +57,8 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardColumnRepository boardColumnRepository;
     private final ProjectRepository projectRepository;
+    private final TaskRepository taskRepository;
+    private final TaskCommentRepository taskCommentRepository;
     private final PermissionService permissionService;
     private final BoardMapper boardMapper;
 
@@ -94,18 +102,79 @@ public class BoardService {
     public List<BoardResponse> listBoards(Long projectId, Long userId) {
         permissionService.requireRole(projectId, userId, ProjectRole.VIEWER);
 
-        return boardRepository.findByProjectIdOrderByCreatedAtAsc(projectId).stream()
-                .map(board -> boardMapper.toResponse(board, boardColumnRepository.findByBoardIdOrderByPositionAsc(board.getId())))
+        List<Board> boards = boardRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
+        Map<Long, List<BoardColumn>> columnsByBoard = new HashMap<>();
+        List<Long> allColumnIds = new ArrayList<>();
+        for (Board board : boards) {
+            List<BoardColumn> columns = boardColumnRepository.findByBoardIdOrderByPositionAsc(board.getId());
+            columnsByBoard.put(board.getId(), columns);
+            columns.forEach(column -> allColumnIds.add(column.getId()));
+        }
+
+        Map<Long, List<Task>> tasksByColumn = loadTasksByColumn(allColumnIds);
+        Map<Long, Long> commentCounts = loadCommentCounts(tasksByColumn);
+
+        return boards.stream()
+                .map(board -> boardMapper.toResponse(board, columnsByBoard.get(board.getId()), tasksByColumn, commentCounts))
                 .toList();
     }
 
-    @Transactional(readOnly = true)
     public BoardResponse getBoardView(Long boardId, Long userId) {
+        return getBoardView(boardId, userId, null, null, null, null);
+    }
+
+    /**
+     * Leitura mais frequente do sistema — uma única consulta com JOIN FETCH, nunca uma por coluna
+     * ou tarefa (claude.md). Filtros (spec-board-kanban.md 4.3) se aplicam às tarefas, nunca às
+     * colunas — uma coluna sem tarefas correspondentes aparece vazia, não some. Filtro por label
+     * fica pendente até o módulo de labels existir (spec-labels-search.md).
+     */
+    @Transactional(readOnly = true)
+    public BoardResponse getBoardView(Long boardId, Long userId, Long assigneeId, TaskPriority priority,
+                                       TaskType type, String search) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.VIEWER);
 
         List<BoardColumn> columns = boardColumnRepository.findByBoardIdOrderByPositionAsc(boardId);
-        return boardMapper.toResponse(board, columns);
+        List<Long> columnIds = columns.stream().map(BoardColumn::getId).toList();
+        Map<Long, List<Task>> tasksByColumn = filterTasks(loadTasksByColumn(columnIds), assigneeId, priority, type, search);
+        Map<Long, Long> commentCounts = loadCommentCounts(tasksByColumn);
+
+        return boardMapper.toResponse(board, columns, tasksByColumn, commentCounts);
+    }
+
+    private Map<Long, List<Task>> filterTasks(Map<Long, List<Task>> tasksByColumn, Long assigneeId,
+                                               TaskPriority priority, TaskType type, String search) {
+        if (assigneeId == null && priority == null && type == null && (search == null || search.isBlank())) {
+            return tasksByColumn;
+        }
+        String normalizedSearch = search != null && !search.isBlank() ? search.trim().toLowerCase() : null;
+
+        Map<Long, List<Task>> filtered = new HashMap<>();
+        tasksByColumn.forEach((columnId, tasks) -> filtered.put(columnId, tasks.stream()
+                .filter(task -> assigneeId == null || (task.getAssignee() != null && task.getAssignee().getId().equals(assigneeId)))
+                .filter(task -> priority == null || task.getPriority() == priority)
+                .filter(task -> type == null || task.getType() == type)
+                .filter(task -> normalizedSearch == null || task.getTitle().toLowerCase().contains(normalizedSearch))
+                .toList()));
+        return filtered;
+    }
+
+    private Map<Long, List<Task>> loadTasksByColumn(List<Long> columnIds) {
+        if (columnIds.isEmpty()) {
+            return Map.of();
+        }
+        return taskRepository.findByColumnIdInAndArchivedFalseOrderByPosition(columnIds).stream()
+                .collect(Collectors.groupingBy(task -> task.getColumn().getId()));
+    }
+
+    private Map<Long, Long> loadCommentCounts(Map<Long, List<Task>> tasksByColumn) {
+        List<Long> taskIds = tasksByColumn.values().stream().flatMap(List::stream).map(Task::getId).toList();
+        if (taskIds.isEmpty()) {
+            return Map.of();
+        }
+        return taskCommentRepository.countByTaskIdIn(taskIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     @Transactional
@@ -209,8 +278,24 @@ public class BoardService {
             throw new ConflictException("Não é possível excluir a última coluna do quadro");
         }
 
-        // Nenhuma tarefa existe ainda no sistema (spec-tasks.md não implementada) — o caminho
-        // "coluna com tarefas exige destino" fica pendente até o módulo de tarefas existir.
+        List<Task> tasksInColumn = taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(columnId);
+        if (!tasksInColumn.isEmpty()) {
+            if (moveTasksTo == null) {
+                throw new ConflictException("Coluna possui tarefas — informe uma coluna de destino");
+            }
+            BoardColumn target = findColumnOrThrow(moveTasksTo);
+            if (!target.getBoard().getId().equals(board.getId())) {
+                throw new InvalidRequestException("Coluna de destino pertence a outro quadro");
+            }
+            List<Task> targetTasks = taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(target.getId());
+            int position = targetTasks.size();
+            for (Task task : tasksInColumn) {
+                task.setColumn(target);
+                task.setPosition(position++);
+            }
+            taskRepository.saveAll(tasksInColumn);
+        }
+
         List<BoardColumn> remaining = boardColumnRepository.findByBoardIdOrderByPositionAsc(board.getId());
         boardColumnRepository.delete(column);
         remaining.remove(column);
