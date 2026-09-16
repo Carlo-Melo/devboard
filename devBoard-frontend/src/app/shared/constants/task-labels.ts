@@ -9,7 +9,7 @@ export const PRIORITY_LABELS: Record<TaskPriority, string> = {
 
 export const PRIORITY_PILL_CLASSES: Record<TaskPriority, string> = {
   LOW: 'pill-muted',
-  MEDIUM: '',
+  MEDIUM: 'pill-info',
   HIGH: 'pill-warning',
   URGENT: 'pill-danger'
 };

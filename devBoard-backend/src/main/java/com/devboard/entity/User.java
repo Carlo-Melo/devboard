@@ -1,7 +1,9 @@
 package com.devboard.entity;
 
 import com.devboard.entity.enums.AuthProvider;
+import com.devboard.util.EncryptedStringConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -56,6 +58,7 @@ public class User {
     private String githubUsername;
 
     @ToString.Exclude
+    @Convert(converter = EncryptedStringConverter.class)
     @Column(name = "github_token")
     private String githubToken;
 

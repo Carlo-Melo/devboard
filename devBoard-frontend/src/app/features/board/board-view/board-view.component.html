@@ -1,26 +1,26 @@
 <div class="page">
   <div class="page-container page-container-wide">
 
-    <div class="loading-state" *ngIf="isLoading">Carregando quadro...</div>
+    <div role="status" class="loading-state" *ngIf="isLoading">Carregando quadro...</div>
 
-    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 
     <ng-container *ngIf="board && !isLoading">
       <a [routerLink]="['/projects', board.projectId]" class="back-link">&larr; Voltar ao projeto</a>
 
       <div class="topbar">
-        <h1>{{ board.name }}</h1>
+        <div><p class="eyebrow">TRABALHO EM MOVIMENTO</p><h1>{{ board.name }}</h1><p class="page-subtitle">Cada tarefa, no seu próximo passo.</p></div><span class="pill">▥ Quadro Kanban</span>
       </div>
 
       <div class="board-filters">
         <input
           type="text"
-          class="board-filter-search"
+          class="board-filter-search" aria-label="Buscar tarefas por título"
           placeholder="Buscar por título..."
           [(ngModel)]="search"
           (change)="onFilterChange()" />
 
-        <select [(ngModel)]="typeFilter" (change)="onFilterChange()">
+        <select aria-label="Filtrar por tipo" [(ngModel)]="typeFilter" (change)="onFilterChange()">
           <option value="">Todos os tipos</option>
           <option value="DEV">Dev</option>
           <option value="QA">QA</option>
@@ -30,7 +30,7 @@
           <option value="OTHER">Outro</option>
         </select>
 
-        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+        <select aria-label="Filtrar por prioridade" [(ngModel)]="priorityFilter" (change)="onFilterChange()">
           <option value="">Todas as prioridades</option>
           <option value="LOW">Baixa</option>
           <option value="MEDIUM">Média</option>
@@ -43,7 +43,7 @@
         <div class="board-column" *ngFor="let column of board.columns">
           <div class="board-column-header">
             <ng-container *ngIf="editingColumnId !== column.id">
-              <span class="board-column-name">{{ column.name }}</span>
+              <span class="board-column-name"><span class="column-dot" [style.background]="column.color" aria-hidden="true"></span>{{ column.name }}</span>
               <div class="board-column-header-actions">
                 <span class="pill" [class.pill-danger]="isOverWip(column.taskCount, column.wipLimit)">
                   {{ column.taskCount }}{{ column.wipLimit ? ' / ' + column.wipLimit : '' }}
@@ -61,9 +61,9 @@
               <input id="col-name-{{ column.id }}" type="text" [(ngModel)]="editColumnForm.name" />
             </div>
             <div class="field">
-              <label for="col-role-{{ column.id }}">Papel semântico</label>
+              <label for="col-role-{{ column.id }}">Etapa do fluxo</label>
               <select id="col-role-{{ column.id }}" [(ngModel)]="editColumnForm.role">
-                <option *ngFor="let role of columnRoles" [value]="role">{{ role }}</option>
+                <option *ngFor="let role of columnRoles" [value]="role">{{ roleLabel(role) }}</option>
               </select>
             </div>
             <div class="field-row">
@@ -113,16 +113,16 @@
             (cdkDropListDropped)="drop($event, column)">
 
             <div
-              class="task-card"
+              class="task-card" tabindex="0" [attr.aria-label]="'Abrir tarefa: ' + task.title" (keydown.enter)="onTaskKeydown($event, task.id)"
               *ngFor="let task of column.tasks"
               cdkDrag
               (click)="goToTask(task.id)">
               <div class="task-card-top">
                 <span class="pill" [ngClass]="priorityClass(task.priority)">{{ priorityLabel(task.priority) }}</span>
                 <span class="pill pill-muted">{{ typeLabel(task.type) }}</span>
-                <button class="task-delete-btn" title="Arquivar tarefa" (click)="archiveTask(column, task, $event)">&times;</button>
+                <button class="task-delete-btn" title="Arquivar tarefa" aria-label="Arquivar tarefa" (click)="archiveTask(column, task, $event)">&times;</button>
               </div>
-              <p class="task-card-title">{{ task.title }}</p>
+              <span class="task-number">#{{ task.id }}</span><p class="task-card-title">{{ task.title }}</p>
               <div class="task-card-footer">
                 <span class="task-card-due" *ngIf="task.dueDate">{{ task.dueDate | date:'dd/MM' }}</span>
                 <span class="task-card-comments" *ngIf="task.commentCount" title="Comentários">{{ task.commentCount }}</span>
@@ -133,7 +133,7 @@
             </div>
 
             <div class="board-column-empty" *ngIf="column.tasks.length === 0 && addingToColumnId !== column.id">
-              Nenhuma tarefa ainda
+              Tudo pronto para começar.
             </div>
 
             <div class="task-add-form" *ngIf="addingToColumnId === column.id">
@@ -169,9 +169,9 @@
               <input id="new-col-name" type="text" placeholder="Nome da coluna" [(ngModel)]="newColumnForm.name" />
             </div>
             <div class="field">
-              <label for="new-col-role">Papel semântico</label>
+              <label for="new-col-role">Etapa do fluxo</label>
               <select id="new-col-role" [(ngModel)]="newColumnForm.role">
-                <option *ngFor="let role of columnRoles" [value]="role">{{ role }}</option>
+                <option *ngFor="let role of columnRoles" [value]="role">{{ roleLabel(role) }}</option>
               </select>
             </div>
             <div class="field-row">

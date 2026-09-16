@@ -1,1 +1,2 @@
-<router-outlet />
+<app-shell *ngIf="isWorkspace; else publicPage"><router-outlet /></app-shell>
+<ng-template #publicPage><router-outlet /></ng-template>

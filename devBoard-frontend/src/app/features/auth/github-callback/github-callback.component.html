@@ -1,0 +1,17 @@
+<div class="auth-page">
+  <a routerLink="/login" class="brand auth-brand" aria-label="devBoard — início"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">dev<span>Board</span></span></a>
+  <span class="auth-caption"><span class="status-dot"></span> Um espaço para suas próximas entregas</span>
+  <div class="auth-card">
+    <ng-container *ngIf="errorMessage; else loading">
+      <h1>Não foi possível entrar</h1>
+      <div class="alert alert-error" role="alert">{{ errorMessage }}</div>
+      <p class="switch-link"><a routerLink="/login">Voltar para o login</a></p>
+    </ng-container>
+
+    <ng-template #loading>
+      <h1>Entrando com GitHub...</h1>
+      <p>Aguarde um instante.</p>
+    </ng-template>
+  </div>
+  <footer class="auth-footer">Organize ideias. Conecte pessoas. Entregue melhor.</footer>
+</div>

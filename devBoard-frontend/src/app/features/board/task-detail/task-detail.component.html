@@ -3,14 +3,14 @@
 
     <div class="loading-state" *ngIf="isLoading">Carregando tarefa...</div>
 
-    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 
     <ng-container *ngIf="task && !isLoading">
       <a [routerLink]="['/boards', task.boardId]" class="back-link">&larr; Voltar ao quadro</a>
 
       <div class="detail-header">
         <div>
-          <span class="task-id">#{{ task.id }}</span>
+          <span class="eyebrow task-id">TAREFA #{{ task.id }}</span>
           <h1>{{ task.title }}</h1>
           <div class="task-badges">
             <span class="pill" [ngClass]="priorityClass(task.priority)">{{ priorityLabel(task.priority) }}</span>
@@ -28,9 +28,9 @@
       <div class="detail-grid">
         <div class="detail-main">
 
-          <div class="card" *ngIf="!isEditing">
+          <div class="card" *ngIf="!isEditing"><h2 class="card-heading">Sobre esta tarefa</h2>
             <p class="task-description" *ngIf="task.description">{{ task.description }}</p>
-            <p class="task-description task-description-empty" *ngIf="!task.description">Sem descrição.</p>
+            <p class="task-description task-description-empty" *ngIf="!task.description">Adicione uma descrição para dar mais contexto ao trabalho.</p>
           </div>
 
           <div class="card task-edit-form" *ngIf="isEditing">
@@ -129,7 +129,7 @@
               <p class="comment-content" *ngIf="editingCommentId !== comment.id">{{ comment.content }}</p>
 
               <div class="comment-edit" *ngIf="editingCommentId === comment.id">
-                <textarea [(ngModel)]="editingCommentContent"></textarea>
+                <textarea aria-label="Editar comentário" [(ngModel)]="editingCommentContent"></textarea>
                 <div class="form-actions">
                   <button class="btn-primary" (click)="saveEditComment(comment)">Salvar</button>
                   <button class="btn-ghost" (click)="cancelEditComment()">Cancelar</button>
@@ -137,10 +137,10 @@
               </div>
             </div>
 
-            <div class="empty-state" *ngIf="task.comments.length === 0">Nenhum comentário ainda.</div>
+            <div class="empty-state" *ngIf="task.comments.length === 0">A conversa começa aqui. Compartilhe uma atualização com a equipe.</div>
 
             <div class="comment-form">
-              <textarea placeholder="Escreva um comentário..." [(ngModel)]="newCommentContent"></textarea>
+              <textarea aria-label="Novo comentário" placeholder="Compartilhe uma atualização ou faça uma pergunta..." [(ngModel)]="newCommentContent"></textarea>
               <button class="btn-primary" [disabled]="isSubmittingComment" (click)="addComment()">Comentar</button>
             </div>
           </div>

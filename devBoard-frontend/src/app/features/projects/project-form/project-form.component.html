@@ -3,10 +3,10 @@
 
     <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
 
-    <div class="card">
+    <div class="card"><p class="eyebrow">ESPAÇO PARA SUAS IDEIAS</p>
       <h1 class="card-title">{{ isEditMode ? 'Editar projeto' : 'Novo projeto' }}</h1>
 
-      <div class="loading-state" *ngIf="isLoading">Carregando...</div>
+      <p class="card-intro">Defina o ponto de partida. Organize as tarefas e acompanhe o progresso em um só lugar.</p><div class="loading-state" *ngIf="isLoading">Carregando...</div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate *ngIf="!isLoading">
 
@@ -14,7 +14,7 @@
 
         <div class="field">
           <label for="name">Nome do projeto</label>
-          <input id="name" type="text" formControlName="name" autocomplete="off" />
+          <input id="name" type="text" formControlName="name" autocomplete="off" placeholder="Ex.: Plataforma de atendimento" />
           <div class="field-error" *ngIf="f['name'].invalid && f['name'].touched">
             <span *ngIf="f['name'].errors?.['required']">Nome é obrigatório</span>
             <span *ngIf="f['name'].errors?.['minlength']">Nome deve ter no mínimo 3 caracteres</span>
@@ -23,13 +23,13 @@
         </div>
 
         <div class="field">
-          <label for="description">Descrição</label>
-          <textarea id="description" formControlName="description"></textarea>
+          <label for="description">Descrição <span class="field-hint">(opcional)</span></label>
+          <textarea id="description" formControlName="description" placeholder="Qual é o objetivo deste projeto?"></textarea>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn-primary" [disabled]="isSaving">
-            {{ isSaving ? 'Salvando...' : 'Salvar' }}
+            {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Criar projeto') }}
           </button>
           <a routerLink="/projects" class="btn-secondary">Cancelar</a>
         </div>

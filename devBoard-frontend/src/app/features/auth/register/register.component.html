@@ -1,8 +1,10 @@
 <div class="auth-page">
+  <a routerLink="/login" class="brand auth-brand" aria-label="devBoard — início"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">dev<span>Board</span></span></a>
+  <span class="auth-caption"><span class="status-dot"></span> Um espaço para suas próximas entregas</span>
   <div class="auth-card" *ngIf="!registeredUser">
-    <h1>Criar conta no devBoard</h1>
+    <p class="eyebrow">VAMOS CONSTRUIR ALGO</p><h1>Seu trabalho, organizado.</h1><p>Crie sua conta e comece seu primeiro projeto.</p>
 
-    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
 
@@ -68,9 +70,8 @@
       <dd>{{ registeredUser.username }}</dd>
       <dt>Email</dt>
       <dd>{{ registeredUser.email }}</dd>
-      <dt>Origem</dt>
-      <dd>{{ registeredUser.authProvider }}</dd>
     </dl>
-    <button type="button" (click)="registeredUser = null">Cadastrar outro usuário</button>
+    <a class="btn-primary auth-success-action" routerLink="/projects">Ir para meus projetos →</a><button type="button" class="btn-github" (click)="registeredUser = null">Cadastrar outro usuário</button>
   </div>
+  <footer class="auth-footer">Organize ideias. Conecte pessoas. Entregue melhor.</footer>
 </div>

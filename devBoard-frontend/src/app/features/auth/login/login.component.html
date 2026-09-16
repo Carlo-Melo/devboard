@@ -1,22 +1,24 @@
 <div class="auth-page">
+  <a routerLink="/login" class="brand auth-brand" aria-label="devBoard — início"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">dev<span>Board</span></span></a>
+  <span class="auth-caption"><span class="status-dot"></span> Um espaço para suas próximas entregas</span>
   <div class="auth-card">
-    <h1>Entrar no devBoard</h1>
+    <p class="eyebrow">SEU PRÓXIMO PASSO COMEÇA AQUI</p><h1>Bom ter você de volta.</h1><p>Entre no devBoard e dê continuidade às suas ideias.</p>
 
-    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
 
       <div class="field">
         <label for="emailOrUsername">Email ou username</label>
-        <input id="emailOrUsername" type="text" formControlName="emailOrUsername" autocomplete="username" />
+        <input id="emailOrUsername" type="text" formControlName="emailOrUsername" autocomplete="username" placeholder="Seu email ou nome de usuário" />
         <div class="field-error" *ngIf="f['emailOrUsername'].invalid && f['emailOrUsername'].touched">
           <span *ngIf="f['emailOrUsername'].errors?.['required']">Email ou username é obrigatório</span>
         </div>
       </div>
 
       <div class="field">
-        <label for="password">Senha</label>
-        <input id="password" type="password" formControlName="password" autocomplete="current-password" />
+        <div class="label-row"><label for="password">Senha</label><a routerLink="/forgot-password">Esqueceu a senha?</a></div>
+        <div class="password-field"><input id="password" [type]="showPassword ? 'text' : 'password'" formControlName="password" autocomplete="current-password" placeholder="Digite sua senha" /><button type="button" class="password-toggle" [attr.aria-label]="showPassword ? 'Ocultar senha' : 'Mostrar senha'" [attr.aria-pressed]="showPassword" (click)="showPassword = !showPassword">{{ showPassword ? 'Ocultar' : 'Mostrar' }}</button></div>
         <div class="field-error" *ngIf="f['password'].invalid && f['password'].touched">
           <span *ngIf="f['password'].errors?.['required']">Senha é obrigatória</span>
         </div>
@@ -27,7 +29,12 @@
       </button>
     </form>
 
-    <p class="switch-link"><a routerLink="/forgot-password">Esqueci minha senha</a></p>
+    <div class="divider">ou continue com</div>
+
+    <button type="button" class="btn-github" (click)="onGithubLogin()">Entrar com GitHub</button>
+
+
     <p class="switch-link">Não tem conta? <a routerLink="/register">Criar conta</a></p>
   </div>
+  <footer class="auth-footer">Organize ideias. Conecte pessoas. Entregue melhor.</footer>
 </div>

@@ -9,5 +9,6 @@
     <include file="db/changelog/V2__create_password_reset_tokens_table.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/V3__create_projects_tables.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/V4__create_tasks_tables.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/V5__create_member_invites_tables.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

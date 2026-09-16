@@ -8,6 +8,10 @@ import lombok.Data;
 @Builder
 public class ProjectMemberResponse {
 
+    private Long id;
+    private Long projectId;
     private UserResponse user;
     private String role;
+    private UserResponse invitedBy;
+    private java.time.LocalDateTime joinedAt;
 }
