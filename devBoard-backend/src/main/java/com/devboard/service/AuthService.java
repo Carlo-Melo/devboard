@@ -115,7 +115,8 @@ public class AuthService {
         return new UnauthorizedException("Credenciais inválidas");
     }
 
-    private AuthResponse buildAuthResponse(User user) {
+    /** Também usado por {@link com.devboard.service.github.GithubOAuthService} ao concluir o login via GitHub. */
+    public AuthResponse buildAuthResponse(User user) {
         String token = jwtTokenProvider.generateToken(user);
 
         return AuthResponse.builder()

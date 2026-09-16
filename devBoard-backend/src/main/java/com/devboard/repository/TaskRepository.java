@@ -31,4 +31,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             + "LEFT JOIN FETCH b.project "
             + "WHERE t.id = :id")
     Optional<Task> findByIdWithDetails(@Param("id") Long id);
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.column c JOIN FETCH c.board b "
+            + "WHERE t.assignee.id = :userId AND b.project.id = :projectId AND t.archived = false")
+    List<Task> findActiveByProjectIdAndAssigneeId(@Param("projectId") Long projectId, @Param("userId") Long userId);
 }

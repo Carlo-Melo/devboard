@@ -54,6 +54,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "Você não tem permissão para esta ação", request, null);
     }
 
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ApiError> handleExternalService(ExternalServiceException ex, HttpServletRequest request) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request, null);
+    }
+
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ApiError> handleRateLimit(RateLimitExceededException ex, HttpServletRequest request) {
         ApiError body = ApiError.builder()

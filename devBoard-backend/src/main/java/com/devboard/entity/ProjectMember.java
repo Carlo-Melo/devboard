@@ -46,6 +46,10 @@ public class ProjectMember {
     @Column(nullable = false, length = 50)
     private ProjectRole role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invited_by_id")
+    private User invitedBy;
+
     @CreationTimestamp
     @Column(name = "joined_at", nullable = false, updatable = false)
     private LocalDateTime joinedAt;

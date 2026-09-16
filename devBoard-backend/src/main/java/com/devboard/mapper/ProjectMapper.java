@@ -59,8 +59,12 @@ public class ProjectMapper {
 
     private ProjectMemberResponse toMemberResponse(ProjectMember member) {
         return ProjectMemberResponse.builder()
+                .id(member.getId())
+                .projectId(member.getProject().getId())
                 .user(userMapper.toResponse(member.getUser()))
                 .role(member.getRole().name())
+                .invitedBy(member.getInvitedBy() != null ? userMapper.toResponse(member.getInvitedBy()) : null)
+                .joinedAt(member.getJoinedAt())
                 .build();
     }
 
