@@ -34,6 +34,11 @@ export class AuthService {
       .pipe(tap(response => this.setToken(response.token)));
   }
 
+  loginWithGithub(redirectUri?: string): void {
+    const params = redirectUri ? `?redirectUri=${encodeURIComponent(redirectUri)}` : '';
+    window.location.href = `${this.apiUrl}/github/login${params}`;
+  }
+
   logout(): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.apiUrl}/logout`, {})
       .pipe(tap(() => this.removeToken()));

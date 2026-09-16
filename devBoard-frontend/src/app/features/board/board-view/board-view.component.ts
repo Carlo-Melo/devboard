@@ -23,11 +23,9 @@ interface ColumnForm {
   role: ColumnRole;
   wipLimit: number | null;
 }
-
 function emptyColumnForm(): ColumnForm {
   return { name: '', color: '', role: 'NONE', wipLimit: null };
 }
-
 @Component({
   selector: 'app-board-view',
   standalone: true,
@@ -194,6 +192,10 @@ export class BoardViewComponent implements OnInit {
     this.router.navigate(['/tasks', taskId]);
   }
 
+  onTaskKeydown(event: Event, taskId: number): void {
+    if (event.target === event.currentTarget) this.goToTask(taskId);
+  }
+
   archiveTask(column: BoardColumnResponse, task: TaskSummaryResponse, event: Event): void {
     event.stopPropagation();
     if (!confirm(`Arquivar a tarefa "${task.title}"?`)) {
@@ -312,6 +314,10 @@ export class BoardViewComponent implements OnInit {
         this.errorMessage = err.message;
       }
     });
+  }
+
+  roleLabel(role: ColumnRole): string {
+    return ({ NONE: 'Sem etapa definida', BACKLOG: 'Backlog', TODO: 'A fazer', IN_PROGRESS: 'Em andamento', IN_REVIEW: 'Em revisão', DONE: 'Concluído' })[role];
   }
 
   priorityLabel(priority: TaskPriority): string {

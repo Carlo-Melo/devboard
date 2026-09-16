@@ -10,7 +10,7 @@ describe('LoginComponent', () => {
   let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(async () => {
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['login']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['login', 'loginWithGithub']);
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
@@ -55,6 +55,13 @@ describe('LoginComponent', () => {
 
     expect(authServiceSpy.login).toHaveBeenCalledWith({ emailOrUsername: 'joao_dev', password: 'SecurePass123' });
     expect(navigateSpy).toHaveBeenCalledWith('/projects');
+  });
+
+  it('should delegate to authService.loginWithGithub when the GitHub button is used', () => {
+    const fixture = createComponent();
+    fixture.componentInstance.onGithubLogin();
+
+    expect(authServiceSpy.loginWithGithub).toHaveBeenCalledWith(undefined);
   });
 
   it('should show the backend error message on failure', () => {

@@ -1,0 +1,31 @@
+<a [attr.href]="router.url.split('#')[0] + '#workspace-content'" class="skip-link">Pular para o conteúdo</a>
+<div class="workspace">
+  <button *ngIf="menuOpen" class="sidebar-backdrop" aria-label="Fechar navegação" (click)="menuOpen = false"></button>
+  <aside class="sidebar" [class.is-open]="menuOpen" [attr.inert]="isMobile && !menuOpen ? '' : null" [cdkTrapFocus]="isMobile && menuOpen" [cdkTrapFocusAutoCapture]="isMobile && menuOpen" aria-label="Navegação principal">
+    <button *ngIf="isMobile" class="close-navigation btn-ghost" aria-label="Fechar navegação" (click)="menuOpen = false">×</button>
+    <a class="brand" routerLink="/projects" aria-label="devBoard — projetos" (click)="closeMenus()"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">dev<span>Board</span><small>WORKSPACE</small></span></a>
+    <div class="workspace-label"><span class="workspace-monogram">W</span><div>Meu workspace<small>Seu espaço de desenvolvimento</small></div></div>
+    <span class="nav-label">ORGANIZAR</span>
+    <nav>
+      <a aria-label="Meus projetos" title="Meus projetos" routerLink="/projects" [class.active]="!router.url.startsWith('/projects/new')" [attr.aria-current]="router.url === '/projects' ? 'page' : null" (click)="closeMenus()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg><span>Meus projetos</span><span class="nav-arrow">↗</span></a>
+      <a aria-label="Criar projeto" title="Criar projeto" routerLink="/projects/new" routerLinkActive="active" (click)="closeMenus()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Criar projeto</span></a>
+    </nav>
+    <div class="sidebar-note"><span class="note-symbol" aria-hidden="true">⌘</span><strong>Menos ruído.<br>Mais progresso.</strong><p>Do primeiro passo à última entrega, um lugar para organizar o trabalho.</p></div>
+    <div class="sidebar-footer"><span class="status-dot"></span><span>devBoard</span><small>Workspace pessoal</small></div>
+  </aside>
+  <div class="workspace-main">
+    <header class="workspace-topbar">
+      <button class="menu-toggle btn-ghost" aria-label="Abrir navegação" [attr.aria-expanded]="menuOpen" (click)="menuOpen = !menuOpen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="breadcrumb"><span>Workspace</span><span aria-hidden="true">/</span><strong>{{ section }}</strong></div>
+      <div class="account">
+        <button class="account-trigger" [attr.aria-expanded]="accountOpen" aria-label="Menu da conta" (click)="accountOpen = !accountOpen">
+          <span class="avatar">{{ (user?.fullName || user?.username || 'DB').slice(0, 2).toUpperCase() }}</span>
+          <span class="account-name"><strong>{{ user?.fullName || user?.username || 'Minha conta' }}</strong><small>{{ user?.email }}</small></span><span aria-hidden="true">⌄</span>
+        </button>
+        <div *ngIf="accountOpen" class="account-popover"><span>MINHA CONTA</span><p>{{ user?.email }}</p><button class="btn-secondary" (click)="logout()">Sair da conta <span aria-hidden="true">↗</span></button></div>
+      </div>
+    </header>
+    <main id="workspace-content" tabindex="-1"><ng-content /></main>
+    <footer class="workspace-footer">Feito para transformar ideias em entregas.<span>devBoard © {{ 2026 }}</span></footer>
+  </div>
+</div>

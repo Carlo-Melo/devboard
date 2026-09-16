@@ -24,6 +24,16 @@ export const routes: Routes = [
       import('./features/auth/reset-password/reset-password.component').then(m => m.ResetPasswordComponent)
   },
   {
+    path: 'auth/github/callback',
+    loadComponent: () =>
+      import('./features/auth/github-callback/github-callback.component').then(m => m.GithubCallbackComponent)
+  },
+  {
+    path: 'invites/:token',
+    loadComponent: () =>
+      import('./features/members/invite-accept/invite-accept.component').then(m => m.InviteAcceptComponent)
+  },
+  {
     path: 'projects',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -40,6 +50,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/projects/project-form/project-form.component').then(m => m.ProjectFormComponent)
+  },
+  {
+    path: 'projects/:id/members',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/members/member-list/member-list.component').then(m => m.MemberListComponent)
   },
   {
     path: 'projects/:id',

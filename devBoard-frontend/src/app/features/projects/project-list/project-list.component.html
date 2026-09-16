@@ -1,45 +1,28 @@
 <div class="page">
   <div class="page-container">
-
     <div class="topbar">
-      <h1>Projetos</h1>
-      <div class="topbar-actions">
-        <div class="user-chip" *ngIf="currentUser">
-          <strong>{{ currentUser.fullName || currentUser.username }}</strong>
-          <span>{{ currentUser.email }}</span>
-        </div>
-        <button type="button" class="btn-ghost" (click)="logout()">Sair</button>
-        <a routerLink="/projects/new" class="btn-primary">Novo Projeto</a>
-      </div>
+      <div><p class="eyebrow">VISÃO GERAL DO WORKSPACE</p><h1>Meus projetos</h1><p class="page-subtitle">Um lugar para organizar ideias e acompanhar cada entrega.</p></div>
+      <div class="topbar-actions"><a routerLink="/projects/new" class="btn-primary"><span aria-hidden="true">＋</span> Novo projeto</a></div>
     </div>
-
-    <div class="loading-state" *ngIf="isLoading">Carregando projetos...</div>
-
-    <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
-
+    <div class="loading-state" role="status" *ngIf="isLoading">Preparando seu workspace...</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }} <button class="btn-ghost" (click)="loadProjects()">Tentar novamente</button></div>
     <ng-container *ngIf="!isLoading && !errorMessage">
-      <div class="empty-state" *ngIf="projects.length === 0">
-        Nenhum projeto ainda. Crie o primeiro para começar.
-      </div>
-
+      <section class="overview-strip" aria-label="Resumo dos projetos">
+        <div class="overview-stat"><span>Projetos ativos</span><strong>{{ totalElements }}</strong><small>Seu trabalho em um só lugar</small></div>
+        <div class="overview-stat"><span>Nesta página</span><strong>{{ projects.length.toString().padStart(2, '0') }}</strong><small>Ordenados por última atualização</small></div>
+        <div class="overview-stat"><span class="status-dot" aria-hidden="true"></span><strong class="overview-message">Grandes entregas.<br>Um passo de cada vez.</strong><small>Escolha um projeto para continuar.</small></div>
+      </section>
+      <div class="section-heading"><h2>Seus espaços de trabalho</h2><span>{{ totalElements }} projeto{{ totalElements === 1 ? '' : 's' }}</span></div>
+      <div class="empty-state" *ngIf="projects.length === 0"><span class="empty-symbol" aria-hidden="true">▥</span><h2>Toda ideia merece um começo.</h2><p>Crie seu primeiro projeto. Seu quadro Kanban estará pronto para receber as primeiras tarefas.</p><a routerLink="/projects/new" class="btn-primary">＋ Criar primeiro projeto</a></div>
       <div class="project-grid" *ngIf="projects.length > 0">
         <a class="project-card" *ngFor="let project of projects" [routerLink]="['/projects', project.id]">
-          <h2>{{ project.name }}</h2>
-          <p>{{ project.description || 'Sem descrição' }}</p>
-          <div class="project-card-meta">
-            <span>{{ project.memberCount + 1 }} membro(s)</span>
-            <span class="pill pill-muted" *ngIf="!project.githubLinked">Sem GitHub</span>
-            <span class="pill" *ngIf="project.githubLinked">GitHub vinculado</span>
-          </div>
+          <div class="project-card-header"><span class="project-symbol">{{ project.name.slice(0, 2).toUpperCase() }}</span><span class="project-arrow" aria-hidden="true">↗</span></div>
+          <h2>{{ project.name }}</h2><p>{{ project.description || 'Um novo espaço para suas próximas entregas.' }}</p>
+          <div class="project-card-meta"><span>{{ project.memberCount + 1 }} {{ project.memberCount === 0 ? 'pessoa' : 'pessoas' }}</span><span class="pill" [class.pill-muted]="!project.githubLinked">{{ project.githubLinked ? 'GitHub conectado' : 'Kanban' }}</span></div>
+          <span class="project-updated">Atualizado em {{ project.updatedAt | date:'dd/MM/yyyy' }}</span>
         </a>
       </div>
-
-      <div class="pagination" *ngIf="totalPages > 1">
-        <button type="button" class="btn-ghost" [disabled]="page === 0" (click)="previousPage()">Anterior</button>
-        <span>Página {{ page + 1 }} de {{ totalPages }}</span>
-        <button type="button" class="btn-ghost" [disabled]="page + 1 >= totalPages" (click)="nextPage()">Próxima</button>
-      </div>
+      <div class="pagination" *ngIf="totalPages > 1"><button type="button" class="btn-secondary" [disabled]="page === 0" (click)="previousPage()">← Anterior</button><span>Página {{ page + 1 }} de {{ totalPages }}</span><button type="button" class="btn-secondary" [disabled]="page + 1 >= totalPages" (click)="nextPage()">Próxima →</button></div>
     </ng-container>
-
   </div>
 </div>

@@ -150,3 +150,15 @@
   @include text-micro;
   color: var(--color-text-muted);
 }
+
+.detail-header { padding-bottom: 28px; border-bottom: 1px solid var(--color-border); }
+.task-id { display: block; margin-bottom: 12px; color: var(--color-primary-500); }
+.detail-main, .detail-side { min-width: 0; }
+.task-description { font-size: 14px; line-height: 1.8; min-height: 80px; overflow-wrap: anywhere; }
+.task-description-empty { color: var(--color-text-secondary); }
+.activity-item { position: relative; margin-left: 4px; padding: 0 0 24px 24px; border-left: 1px solid var(--color-border); border-bottom: 0; }
+.activity-item::before { content: ''; position: absolute; left: -4px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary-500); }
+.activity-item p { font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }.activity-date { font-size: 10px; color: var(--color-text-secondary); }
+.comment-content { line-height: 1.8; overflow-wrap: anywhere; }.comment-header { flex-wrap: wrap; }.comment-meta { color: var(--color-text-secondary); }.comment-form { padding-top: 24px; border-top: 1px solid var(--color-border); }.comment-form .btn-primary { margin-left: auto; display: flex; }
+.checkbox-item input { accent-color: var(--color-primary-500); width: 16px; height: 16px; }
+@media (max-width: 767px) { .comment-content, .comment-edit { margin-left: 0; }.comment-actions { margin-left: 0; } }

@@ -1,172 +1,23 @@
-// Telas de autenticação — spec-design-system.md, secao 8.1:
-// card centralizado sobre --color-bg-base, decoração diagonal (5.10) nas bordas,
-// formulário conforme 5.8, botão de submissão conforme 5.3 (variante primária).
 @import '../../shared/styles/typography.mixins';
-
-.auth-page {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg-base);
-  padding: var(--space-6);
-  overflow: hidden;
-}
-
-// Decoração de marca (5.10): faixas diagonais em gradiente verde nos cantos.
-// Tela de baixa densidade de dados — uso permitido; nunca atrás de conteúdo denso.
-.auth-page::before,
-.auth-page::after {
-  content: '';
-  position: absolute;
-  width: 160%;
-  height: 70px;
-  background: linear-gradient(90deg, rgba(26, 239, 168, 0) 0%, rgba(26, 239, 168, 0.4) 50%, rgba(26, 239, 168, 0) 100%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.auth-page::before {
-  top: -120px;
-  right: -30%;
-  transform: rotate(35deg);
-}
-
-.auth-page::after {
-  bottom: -120px;
-  left: -30%;
-  transform: rotate(35deg);
-}
-
-// Card base (5.4): fundo --color-surface, borda 1px --color-border, --radius-lg, padding --space-6.
-.auth-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 420px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-
-  h1 {
-    @include text-h1;
-    margin: 0 0 var(--space-5);
-    color: var(--color-primary-500);
-  }
-
-  p {
-    @include text-body;
-    color: var(--color-text-secondary);
-    margin: 0 0 var(--space-4);
-  }
-}
-
-.field {
-  margin-bottom: var(--space-4);
-
-  label {
-    display: block;
-    @include text-label;
-    margin-bottom: var(--space-2);
-    color: var(--color-text-secondary);
-  }
-
-  // Input conforme 5.8.
-  input {
-    width: 100%;
-    background: var(--color-bg-shell);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3) var(--space-4);
-    color: var(--color-text-primary);
-    @include text-body;
-    transition: border-color var(--transition-fast);
-
-    &::placeholder {
-      color: var(--color-text-muted);
-    }
-
-    &:focus {
-      outline: none;
-      border-color: var(--color-primary-500);
-      box-shadow: 0 0 0 3px rgba(26, 239, 168, 0.15);
-    }
-  }
-}
-
-.field-error {
-  margin-top: var(--space-2);
-  @include text-label;
-  color: var(--color-danger);
-}
-
-.alert {
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-4);
-  @include text-body;
-
-  &.alert-error {
-    background: var(--color-danger-100);
-    color: var(--color-danger);
-  }
-
-  &.alert-success {
-    background: var(--color-primary-100);
-    color: var(--color-primary-500);
-  }
-}
-
-// Botão primário (5.3): fundo --color-primary-500, hover --color-primary-600, texto on-primary.
-button[type='submit'], button[type='button'] {
-  width: 100%;
-  min-height: 40px;
-  padding: var(--space-3) var(--space-5);
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-500);
-  color: var(--color-text-on-primary);
-  font-weight: 600;
-  @include text-body(600);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-
-  &:hover:not(:disabled) {
-    background: var(--color-primary-600);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(26, 239, 168, 0.35);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.switch-link {
-  margin-top: var(--space-4);
-  text-align: center;
-  @include text-label;
-  color: var(--color-text-secondary);
-
-  a {
-    color: var(--color-primary-500);
-    font-weight: 600;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--color-primary-500);
-      outline-offset: 2px;
-      border-radius: var(--radius-sm);
-    }
-  }
-}
+.auth-page { position: relative; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 120px 24px 88px; overflow: hidden; isolation: isolate; background: var(--color-bg-base); }
+.auth-page::before, .auth-page::after { content: ''; position: absolute; width: 640px; height: 100px; background: linear-gradient(90deg, transparent, var(--color-primary-100), transparent); transform: rotate(-48deg); pointer-events: none; z-index: -1; border-top: 1px solid var(--color-primary-100); border-bottom: 1px solid var(--color-primary-100); }
+.auth-page::before { top: 12%; right: -280px; }.auth-page::after { bottom: 4%; left: -280px; }
+.auth-brand { position: absolute; left: 48px; top: 32px; }
+.auth-caption { position: absolute; right: 48px; top: 44px; color: var(--color-text-secondary); font-size: 11px; letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+.auth-card { width: 100%; max-width: 456px; border: 1px solid var(--color-border); border-radius: 24px; padding: 40px; background: var(--color-surface); }
+.auth-card h1 { font-size: 26px; line-height: 32px; letter-spacing: -.8px; color: var(--color-text-primary); margin: 0 0 12px; }
+.auth-card > p { color: var(--color-text-secondary); font-size: 12px; line-height: 20px; margin: 0 0 28px; }
+.auth-card .eyebrow { color: var(--color-primary-500); font-size: 10px; letter-spacing: .14em; margin-bottom: 16px; }
+.auth-card .field { margin-bottom: 20px; }
+.auth-card button[type='submit'], .auth-card button[type='button']:not(.password-toggle) { width: 100%; min-height: 48px; border: 0; border-radius: 12px; padding: 12px 20px; background: var(--color-primary-500); color: var(--color-text-on-primary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: background var(--transition-fast); }
+.auth-card button[type='submit']:hover:not(:disabled) { background: var(--color-primary-600); }
+.auth-card button.btn-github { background: var(--color-bg-shell) !important; border: 1px solid var(--color-border) !important; color: var(--color-text-primary) !important; }
+.auth-card button.btn-github:hover:not(:disabled) { background: var(--color-surface-hover) !important; }
+.btn-github svg { width: 18px; height: 18px; fill: currentColor; }
+.divider { display: flex; gap: 16px; align-items: center; color: var(--color-text-secondary); font-size: 10px; margin: 24px 0; }.divider::before, .divider::after { content: ''; height: 1px; background: var(--color-border); flex: 1; }
+.auth-card .switch-link { margin: 24px 0 0; text-align: center; font-size: 12px; }.switch-link a { color: var(--color-primary-500); text-decoration: none; font-weight: 500; }.switch-link a:hover { text-decoration: underline; }
+.auth-footer { margin-top: 28px; color: var(--color-text-secondary); font-size: 11px; text-align: center; }
+.password-field { position: relative; }.password-field input { padding-right: 84px; }.password-toggle { position: absolute; right: 8px; top: 8px; height: 32px; background: none; border: 0; color: var(--color-text-secondary); font-size: 10px; padding: 0 8px; cursor: pointer; }
+.label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }.label-row label { margin: 0; }.label-row a { font-size: 10px; color: var(--color-text-secondary); text-decoration: none; }.label-row a:hover { color: var(--color-primary-500); }
+.auth-success-action { display: flex; width: 100%; margin: 24px 0 12px; }
+@media (max-width: 600px) { .auth-page { padding: 104px 20px 32px; justify-content: flex-start; }.auth-brand { left: 24px; top: 24px; }.auth-caption { display: none; }.auth-card { padding: 28px 24px; }.auth-card h1 { font-size: 24px; }.auth-page::before { right: -420px; }.auth-page::after { left: -420px; } }

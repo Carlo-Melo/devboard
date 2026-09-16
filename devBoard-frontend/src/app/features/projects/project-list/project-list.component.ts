@@ -22,6 +22,7 @@ export class ProjectListComponent implements OnInit {
 
   page = 0;
   totalPages = 0;
+  totalElements = 0;
   readonly pageSize = 12;
 
   constructor(
@@ -46,6 +47,7 @@ export class ProjectListComponent implements OnInit {
       next: (response) => {
         this.projects = response.content;
         this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
         this.isLoading = false;
       },
       error: () => {

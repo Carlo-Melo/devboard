@@ -26,8 +26,12 @@ export interface ProjectSummaryResponse {
 }
 
 export interface ProjectMemberResponse {
+  id: number;
+  projectId: number;
   user: UserResponse;
   role: ProjectRole;
+  invitedBy?: UserResponse;
+  joinedAt?: string;
 }
 
 export interface BoardSummaryResponse {

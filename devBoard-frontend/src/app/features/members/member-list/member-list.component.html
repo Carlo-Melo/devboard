@@ -1,0 +1,32 @@
+<main class="page"><div class="page-container">
+  <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+  <p *ngIf="isLoading">Carregando membros...</p>
+  <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+  <div class="alert alert-success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <ng-container *ngIf="project && !isLoading">
+    <div class="detail-header"><div><p class="eyebrow">EQUIPE</p><h1>{{ project.name }}</h1><p>Gerencie quem participa deste projeto.</p></div><button type="button" class="btn-secondary" *ngIf="!project.currentUserOwner" (click)="leave()">Sair do projeto</button></div>
+
+    <section class="card" *ngIf="canManage">
+      <h2 class="card-heading">Convidar por email</h2>
+      <form [formGroup]="inviteForm" (ngSubmit)="invite()" class="invite-form">
+        <input type="email" formControlName="email" placeholder="email@exemplo.com" aria-label="Email do convidado">
+        <select formControlName="role" aria-label="Papel do convidado"><option *ngFor="let role of roles" [value]="role">{{ role }}</option></select>
+        <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Enviando...' : 'Convidar' }}</button>
+      </form>
+      <p class="field-error" *ngIf="inviteForm.controls.email.touched && inviteForm.controls.email.invalid">Informe um email válido.</p>
+      <div class="link-actions"><button type="button" class="btn-secondary" *ngFor="let role of roles" (click)="generateLink(role)">Gerar link {{ role }}</button></div>
+      <div class="link-actions"><button type="button" class="btn-secondary" *ngFor="let role of roles" [disabled]="isSubmitting" (click)="importGithub(role)">Importar GitHub como {{ role }}</button></div>
+    </section>
+
+    <section class="card"><h2 class="card-heading">Membros</h2>
+      <div class="member-row"><span>{{ project.owner.fullName || project.owner.username }}</span><span class="pill">DONO</span></div>
+      <div class="member-row" *ngFor="let member of project.members">
+        <span>{{ member.user.fullName || member.user.username }}</span>
+        <div class="member-actions"><select *ngIf="canManage" [value]="member.role" (change)="changeRole(member.id, $any($event.target).value)"><option *ngFor="let role of roles" [value]="role">{{ role }}</option></select><span class="pill pill-muted" *ngIf="!canManage">{{ member.role }}</span><button type="button" class="btn-danger" *ngIf="canManage" (click)="remove(member.id, member.user.fullName || member.user.username)">Remover</button></div>
+      </div>
+    </section>
+
+    <section class="card" *ngIf="canManage"><h2 class="card-heading">Convites pendentes</h2><p *ngIf="!invites.length">Nenhum convite pendente.</p><div class="member-row" *ngFor="let invite of invites"><span>{{ invite.email || 'Link compartilhável' }}</span><span class="pill pill-muted">{{ invite.role }}</span></div></section>
+  </ng-container>
+</div></main>

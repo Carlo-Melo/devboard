@@ -14,6 +14,7 @@ import { ApiError } from '../../../core/models/api-error.model';
 })
 export class LoginComponent {
 
+  showPassword = false;
   loginForm: FormGroup;
   isLoading = false;
   errorMessage: string | null = null;
@@ -32,6 +33,11 @@ export class LoginComponent {
 
   get f() {
     return this.loginForm.controls;
+  }
+
+  onGithubLogin(): void {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? undefined;
+    this.authService.loginWithGithub(returnUrl);
   }
 
   onSubmit(): void {

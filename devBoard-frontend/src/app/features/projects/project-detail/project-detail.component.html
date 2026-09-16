@@ -10,7 +10,7 @@
     <ng-container *ngIf="project && !isLoading">
       <div class="detail-header">
         <div>
-          <h1>{{ project.name }}</h1>
+          <p class="eyebrow">VISÃO DO PROJETO</p><h1>{{ project.name }}</h1>
           <p>{{ project.description || 'Sem descrição' }}</p>
         </div>
         <div class="detail-actions">
@@ -23,7 +23,7 @@
 
       <div class="detail-grid">
         <div class="card">
-          <h2 class="card-heading">Quadros</h2>
+          <h2 class="card-heading">Quadros do projeto</h2><p class="card-intro">Escolha um quadro para acompanhar o trabalho.</p>
           <a class="member-row board-link" *ngFor="let board of project.boards" [routerLink]="['/boards', board.id]">
             <div class="member-info">
               <span>{{ board.name }}</span>
@@ -40,7 +40,7 @@
           </div>
           <div class="info-row">
             <span>Seu papel</span>
-            <span>{{ project.currentUserRole }}</span>
+            <span>{{ project.currentUserRole === 'ADMIN' ? 'Administrador' : project.currentUserRole === 'DEVELOPER' ? 'Desenvolvedor' : 'Visualizador' }}</span>
           </div>
           <div class="info-row">
             <span>GitHub</span>
@@ -53,7 +53,7 @@
         </div>
 
         <div class="card">
-          <h2 class="card-heading">Membros</h2>
+          <div class="card-heading-row"><h2 class="card-heading">Pessoas neste projeto</h2><a [routerLink]="['/projects', project.id, 'members']">Gerenciar</a></div>
           <div class="member-row">
             <div class="member-info">
               <span class="avatar">{{ initials(project.owner.fullName || project.owner.username) }}</span>
