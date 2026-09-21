@@ -21,6 +21,9 @@ logs/
 *.pid
 *.seed
 
+# Auditoria: evidências são geradas localmente e podem conter caminhos ou saídas de execução
+docs/auditoria/evidencias/
+
 # IDEs and operating-system files
 .idea/
 .vscode/
