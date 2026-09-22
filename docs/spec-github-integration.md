@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-projects.md` + `spec-tasks.md`
 
-**Status**: MVP — Prioridade 5
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 5
 **Dependências**: Projetos (repositório vinculado), Tarefas, Quadro (papéis semânticos de coluna)
 
 ---
@@ -27,7 +27,7 @@ O módulo escuta eventos do GitHub via webhook, identifica a tarefa corresponden
 - Sincronização de estado entre tarefa e issue
 - Configuração das automações por projeto
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Sincronização bidirecional de comentários
 - Integração com GitHub Actions e status de build
 - Suporte a GitLab, Bitbucket ou outros

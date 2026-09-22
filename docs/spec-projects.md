@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-authentication.md`
 
-**Status**: MVP — Prioridade 2
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 2
 **Dependências**: Autenticação (usuário autenticado é sempre o dono do projeto criado)
 
 ---
@@ -25,7 +25,7 @@ Um projeto sem repositório vinculado continua plenamente funcional como Kanban.
 - Disparar sincronização manual com o GitHub
 - Importar issues existentes do GitHub como tarefas
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Templates de projeto
 - Duplicação de projetos
 - Transferência de propriedade

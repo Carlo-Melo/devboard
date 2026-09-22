@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + todas as specs anteriores
 
-**Status**: MVP — Prioridade 8
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 8
 **Dependências**: Tarefas, Membros, Integração GitHub
 
 ---
@@ -27,7 +27,7 @@ Um mesmo evento normalmente gera uma atividade e zero, uma ou várias notificaç
 - Marcar como lida individualmente e em lote
 - Preferências de notificação por usuário
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Envio de notificações por email
 - Integração com Slack ou Discord
 - Notificações em tempo real por WebSocket
@@ -245,4 +245,4 @@ Remove da lista do usuário. Não afeta a atividade correspondente.
 
 ---
 
-**Fim das especificações do MVP.**
+**Fim das especificações do produto v1.0.0.**

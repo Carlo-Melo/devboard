@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-tasks.md` + `spec-board-kanban.md`
 
-**Status**: MVP — Prioridade 7
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 7
 **Dependências**: Tarefas, Quadro, Projetos
 
 ---
@@ -28,7 +28,7 @@ Dois recursos complementares que tornam o quadro utilizável à medida que o vol
 - Ordenação de resultados
 - Filtros predefinidos de uso frequente
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Labels globais compartilhadas entre projetos
 - Filtros salvos pelo usuário
 - Busca full-text em comentários
