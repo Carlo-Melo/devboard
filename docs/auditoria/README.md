@@ -8,9 +8,10 @@ Este diretório mantém a auditoria técnica reproduzível do projeto. Ela compa
 - `gerar-relatorio.mjs`: fonte do relatório e dos dados consolidados da auditoria.
 - `relatorio-devboard.html`: versão navegável do relatório, gerada pelo script.
 - `CHANGELOG.md`: histórico das versões da auditoria.
+- `COMO-EXECUTAR-PROFESSOR.md`: roteiro curto para abrir e regenerar a auditoria.
 - `README.md`: orientação de manutenção deste material.
 
-O PDF de entrega é exportado para `output/pdf/auditoria-devboard-v1.1.0.pdf` e corresponde ao mesmo conteúdo do HTML.
+O PDF de entrega atual é exportado para `output/pdf/auditoria-devboard-v1.1.1.pdf` e corresponde ao mesmo conteúdo do HTML.
 
 ## Como regenerar
 

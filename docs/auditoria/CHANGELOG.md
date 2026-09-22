@@ -1,5 +1,12 @@
 # Histórico da auditoria devBoard
 
+## 1.1.1 — 2026-09-21
+
+- torna o tema claro de alto contraste o padrão do HTML e do PDF;
+- mantém o tema escuro disponível pelo botão **Tema**;
+- melhora a legibilidade de cards, tabelas, indicadores e evidências impressas;
+- adiciona um guia independente para o professor abrir e regenerar a auditoria.
+
 ## 1.1.0 — 2026-09-21
 
 - incorpora as quatro etapas da atividade de Auditoria de Configuração de Software;
