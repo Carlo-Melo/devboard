@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-projects.md`
 
-**Status**: MVP — Prioridade 3
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 3
 **Dependências**: Projetos
 
 ---
@@ -26,7 +26,7 @@ As colunas também são o alvo das automações do GitHub: mover uma tarefa entr
 - Papéis semânticos de coluna (usados pelas automações)
 - Limite de trabalho em progresso (WIP) por coluna
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Visualizações alternativas (lista, calendário, timeline)
 - Swimlanes
 - Templates de quadro compartilháveis entre projetos

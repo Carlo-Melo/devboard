@@ -2,6 +2,12 @@
 
 Documentação do projeto no padrão **Spec-Driven Development**.
 
+## Marco do produto
+
+As specs deste diretório definem o escopo completo do **devBoard v1.0.0**. A primeira versão do produto só é considerada concluída quando todos os módulos e todos os critérios de aceite descritos aqui estiverem implementados e validados.
+
+Itens marcados como fora do escopo não reduzem a definição da v1.0.0: eles são evoluções planejáveis para versões posteriores. Depois da entrega da v1.0.0, melhorias e novas funcionalidades devem nascer em novas specs ou em revisões versionadas das existentes.
+
 ---
 
 ## Princípio
@@ -110,4 +116,4 @@ A spec é a fonte de verdade. Quando código e spec divergem, um dos dois está 
 **Sprint 2** — integração GitHub, membros
 **Sprint 3** — labels e busca, notificações
 
-Ao final da Sprint 1 o devBoard já é um Kanban funcional. A Sprint 2 entrega o diferencial do produto.
+Ao final da Sprint 1 o devBoard já é um Kanban funcional. A Sprint 2 entrega o diferencial de integração. A conclusão da Sprint 3, seguida da validação integral dos critérios de aceite, habilita a publicação da versão `v1.0.0`.

@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-board-kanban.md`
 
-**Status**: MVP — Prioridade 4
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 4
 **Dependências**: Quadro Kanban, Projetos, Autenticação
 
 ---
@@ -28,9 +28,9 @@ O tipo da tarefa é o que carrega essa distinção, e é ele que determina se re
 - Vínculo com issue e PR do GitHub
 - Criação de branch a partir da tarefa
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Subtarefas e dependências entre tarefas
-- Anexos de arquivo (fase futura)
+- Anexos de arquivo (evolução posterior)
 - Recorrência
 - Controle de tempo trabalhado
 

@@ -3,7 +3,7 @@
 > **Pré-requisito**: `claude.md`
 > **Fonte**: `docs/DesingSystem.jpg` (referência visual única, extraída por inspeção)
 
-**Status**: referência de UI — norteia o frontend, não é um módulo de backend
+**Escopo de entrega**: interface do produto v1.0.0 — norteia o frontend, não é um módulo de backend
 **Aplica-se a**: `devBoard-frontend/` (todas as telas)
 
 ---
@@ -26,7 +26,7 @@ Quando um valor não está literalmente visível na imagem de referência (ex.: 
 - Tokens prontos para uso em SCSS
 - Mapeamento dos componentes do design system para as telas reais do devBoard
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Tema claro (a referência define apenas tema escuro; ver seção 10)
 - Biblioteca de componentes Angular já implementada (este documento é a especificação; a implementação é trabalho de frontend subsequente)
 - Ilustrações, ícones customizados de marca (usa-se biblioteca de ícones de linha padrão — ver 3.7)
@@ -287,7 +287,7 @@ Labels do projeto são tags (5.6) com cor definida pelo usuário — nesse caso 
 
 ## 10. TEMA CLARO
 
-A referência define apenas tema escuro. O devBoard não exige tema claro no MVP; se vier a ser solicitado, a estratégia é inverter a escala de superfície (`--color-bg-base` → quase branco, `--color-surface` → branco, texto invertido) mantendo `--color-primary-500` como único acento — não redesenhar componentes, apenas reatribuir tokens. Fora do escopo desta versão.
+A referência define apenas tema escuro. O devBoard não exige tema claro na versão 1.0.0; se vier a ser solicitado em uma versão posterior, a estratégia é inverter a escala de superfície (`--color-bg-base` → quase branco, `--color-surface` → branco, texto invertido) mantendo `--color-primary-500` como único acento — não redesenhar componentes, apenas reatribuir tokens.
 
 ---
 

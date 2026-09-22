@@ -13,7 +13,7 @@ Quando spec e este arquivo se contradizem: a spec manda no comportamento, este a
 **Nome**: devBoard — Kanban integrado ao GitHub
 **Objetivo**: gerenciamento de projetos para pequenas equipes de desenvolvimento
 **Público**: equipes de 2 a 10 devs
-**Status**: MVP
+**Status**: Produto v1.0.0 em desenvolvimento
 
 ---
 
@@ -51,7 +51,7 @@ devBoard/
 | Autenticação | JWT (JJWT 0.12+) |
 | Migrations | Liquibase |
 | GitHub API | `org.kohsuke:github-api` |
-| Cache / rate limit | Caffeine (in-memory, MVP) |
+| Cache / rate limit | Caffeine (in-memory, versão 1.0.0) |
 | Build | Maven 3.8+ |
 | Logging | SLF4J + Logback |
 | Testes | JUnit 5 + Mockito |
@@ -397,7 +397,7 @@ Nada que dependa de serviço externo pode bloquear a resposta HTTP.
 
 **Vai para assíncrono**: envio de email, processamento de webhook, importação de issues, chamadas de escrita ao GitHub, geração de notificação.
 
-**MVP usa `@Async` com pool dedicado** — não há fila externa. Configurar em `config/AsyncConfig`, com pools separados por natureza da carga (github, email, notification) para que um não afogue o outro.
+**A versão 1.0.0 usa `@Async` com pool dedicado** — não há fila externa. Configurar em `config/AsyncConfig`, com pools separados por natureza da carga (github, email, notification) para que um não afogue o outro.
 
 ```java
 @Async("githubExecutor")
@@ -417,7 +417,7 @@ Falhas transitórias (rede, `5xx`, limite de taxa do GitHub) tentam até 3 vezes
 
 ### Rotinas agendadas
 
-Em `scheduler/`, com `@Scheduled`. No MVP: aviso de prazo próximo e vencido (de hora em hora) e limpeza de notificações lidas com mais de 90 dias (diária).
+Em `scheduler/`, com `@Scheduled`. Na versão 1.0.0: aviso de prazo próximo e vencido (de hora em hora) e limpeza de notificações lidas com mais de 90 dias (diária).
 
 Toda rotina precisa ser idempotente: rodar duas vezes não pode duplicar notificação.
 

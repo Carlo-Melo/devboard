@@ -3,7 +3,7 @@
 > **Pré-requisito**: Leia `claude.md` (padrões de código, estrutura, stack).
 > Esta spec define **o quê** deve ser construído. O **como** está no `claude.md`.
 
-**Status**: MVP — Prioridade 1
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 1
 **Dependências**: Nenhuma (módulo base)
 
 ---
@@ -27,7 +27,7 @@ O GitHub OAuth é estratégico: o token obtido é reutilizado pelos módulos de 
 - Recuperação de senha por email
 - Consulta e edição do próprio perfil
 
-### Fora do escopo (fase futura)
+### Fora do escopo da versão 1.0.0
 - Refresh token
 - Confirmação de email no registro
 - Autenticação de dois fatores
@@ -222,7 +222,7 @@ Todos sob `/api/auth`. Nenhum exige autenticação, exceto onde indicado.
 
 ### 4.9 Logout — `POST /logout` 🔒
 
-**Comportamento**: no MVP, apenas confirma a operação. A remoção do token é responsabilidade do cliente.
+**Comportamento**: na versão 1.0.0, apenas confirma a operação. A remoção do token é responsabilidade do cliente.
 
 **Saída (200)**: mensagem de sucesso
 
@@ -232,7 +232,7 @@ Todos sob `/api/auth`. Nenhum exige autenticação, exceto onde indicado.
 
 **GET**: retorna dados públicos do usuário autenticado (inclui origem da conta e se o GitHub está conectado; nunca retorna senha nem token GitHub).
 
-**PUT**: permite alterar nome completo e avatar. Email e username não são editáveis no MVP.
+**PUT**: permite alterar nome completo e avatar. Email e username não são editáveis na versão 1.0.0.
 
 ---
 
@@ -242,7 +242,7 @@ Todos sob `/api/auth`. Nenhum exige autenticação, exceto onde indicado.
 1. Usuário preenche o formulário de registro.
 2. Sistema valida unicidade e força da senha.
 3. Conta é criada com senha em hash.
-4. JWT é emitido imediatamente — não há etapa de confirmação de email no MVP.
+4. JWT é emitido imediatamente — não há etapa de confirmação de email na versão 1.0.0.
 5. Cliente armazena o token e passa a enviá-lo em todas as requisições.
 
 ### 5.2 Login via GitHub (usuário novo)

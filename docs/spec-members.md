@@ -2,7 +2,7 @@
 
 > **Pré-requisito**: `claude.md` + `spec-projects.md` + `spec-authentication.md`
 
-**Status**: MVP — Prioridade 6
+**Escopo de entrega**: Produto v1.0.0 — Prioridade 6
 **Dependências**: Projetos, Autenticação
 
 ---
@@ -26,7 +26,7 @@ O modelo de papéis é deliberadamente enxuto — três níveis — porque o pú
 - Alteração de papel
 - Remoção de membro e saída voluntária
 
-### Fora do escopo
+### Fora do escopo da versão 1.0.0
 - Grupos ou times reutilizáveis entre projetos
 - Papéis customizados
 - Permissões por quadro ou por coluna
