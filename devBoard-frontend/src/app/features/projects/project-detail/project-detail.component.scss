@@ -1,1 +1,24 @@
 @import '../projects-shared';
+
+.card-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+
+  .card-heading {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-heading-row {
+    align-items: stretch;
+    flex-direction: column;
+
+    .btn-secondary {
+      width: 100%;
+    }
+  }
+}

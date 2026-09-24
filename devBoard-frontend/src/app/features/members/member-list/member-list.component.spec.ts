@@ -10,7 +10,8 @@ describe('MemberListComponent', () => {
   let memberService: jasmine.SpyObj<MemberService>;
 
   beforeEach(async () => {
-    memberService = jasmine.createSpyObj('MemberService', ['listInvites', 'inviteByEmail', 'createInviteLink', 'importGithub', 'updateRole', 'remove', 'leave']);
+    memberService = jasmine.createSpyObj('MemberService', ['list', 'listInvites', 'inviteByEmail', 'createInviteLink', 'importGithub', 'updateRole', 'remove', 'leave']);
+    memberService.list.and.returnValue(of([]));
     memberService.listInvites.and.returnValue(of([]));
 
     const projectService = jasmine.createSpyObj<ProjectService>('ProjectService', ['getById']);
@@ -43,7 +44,25 @@ describe('MemberListComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.project?.name).toBe('Projeto');
+    expect(memberService.list).toHaveBeenCalledWith(1);
     expect(memberService.listInvites).toHaveBeenCalledWith(1, 'PENDING');
+  });
+
+  it('renders every member returned by the members endpoint', () => {
+    memberService.list.and.returnValue(of([
+      {
+        id: 5,
+        projectId: 1,
+        user: { id: 8, username: 'convidado', email: 'convidado@example.com', fullName: 'Pessoa Convidada', authProvider: 'TRADITIONAL', githubConnected: false },
+        role: 'DEVELOPER'
+      }
+    ] as any));
+    const fixture = TestBed.createComponent(MemberListComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.members.length).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('Pessoa Convidada');
+    expect(fixture.nativeElement.textContent).toContain('convidado@example.com');
   });
 
   it('does not submit an invalid email invitation', () => {
@@ -75,5 +94,41 @@ describe('MemberListComponent', () => {
 
     expect(memberService.importGithub).toHaveBeenCalledWith(1, 'VIEWER');
     expect(fixture.componentInstance.successMessage).toContain('2 membro(s) adicionado(s)');
+  });
+
+  it('shows a generated invitation link with a copy action', () => {
+    const inviteLink = 'http://localhost:4200/invites/token-123';
+    memberService.createInviteLink.and.returnValue(of({ acceptanceUrl: inviteLink } as any));
+    const fixture = TestBed.createComponent(MemberListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.generateLink('DEVELOPER');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.generatedInviteLink).toBe(inviteLink);
+    expect(fixture.nativeElement.querySelector('#generated-invite-link').value).toBe(inviteLink);
+    expect(fixture.nativeElement.querySelector('.generated-invite-link button').textContent).toContain('Copiar link');
+  });
+
+  it('copies the generated invitation link to the clipboard', async () => {
+    const writeText = jasmine.createSpy('writeText').and.resolveTo();
+    const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+    const fixture = TestBed.createComponent(MemberListComponent);
+    const component = fixture.componentInstance;
+    component.generatedInviteLink = 'http://localhost:4200/invites/token-123';
+
+    try {
+      await component.copyGeneratedInviteLink();
+
+      expect(writeText).toHaveBeenCalledWith('http://localhost:4200/invites/token-123');
+      expect(component.linkCopyMessage).toContain('copiado');
+    } finally {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, 'clipboard', originalClipboard);
+      } else {
+        delete (navigator as { clipboard?: Clipboard }).clipboard;
+      }
+    }
   });
 });

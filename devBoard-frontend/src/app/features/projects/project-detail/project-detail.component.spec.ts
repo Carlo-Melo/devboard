@@ -82,6 +82,17 @@ describe('ProjectDetailComponent', () => {
     expect(fixture.componentInstance.isOwner).toBeFalse();
   });
 
+  it('should render the member management action with the secondary button style', () => {
+    projectServiceSpy.getById.and.returnValue(of(projectResponse()));
+
+    const fixture = createComponent();
+    const manageLink = fixture.nativeElement.querySelector('a[href="/projects/1/members"]');
+
+    expect(manageLink).not.toBeNull();
+    expect(manageLink.classList).toContain('btn-secondary');
+    expect(manageLink.textContent).toContain('Gerenciar membros');
+  });
+
   it('should archive and navigate to the project list when confirmed', () => {
     projectServiceSpy.getById.and.returnValue(of(projectResponse()));
     projectServiceSpy.archive.and.returnValue(of(void 0));

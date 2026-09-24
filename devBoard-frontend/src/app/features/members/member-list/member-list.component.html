@@ -7,26 +7,76 @@
   <ng-container *ngIf="project && !isLoading">
     <div class="detail-header"><div><p class="eyebrow">EQUIPE</p><h1>{{ project.name }}</h1><p>Gerencie quem participa deste projeto.</p></div><button type="button" class="btn-secondary" *ngIf="!project.currentUserOwner" (click)="leave()">Sair do projeto</button></div>
 
-    <section class="card" *ngIf="canManage">
+    <section class="card invite-card" *ngIf="canManage">
       <h2 class="card-heading">Convidar por email</h2>
       <form [formGroup]="inviteForm" (ngSubmit)="invite()" class="invite-form">
-        <input type="email" formControlName="email" placeholder="email@exemplo.com" aria-label="Email do convidado">
-        <select formControlName="role" aria-label="Papel do convidado"><option *ngFor="let role of roles" [value]="role">{{ role }}</option></select>
-        <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Enviando...' : 'Convidar' }}</button>
+        <div class="field invite-email-field">
+          <label for="invite-email">Email do convidado</label>
+          <input id="invite-email" type="email" formControlName="email" placeholder="email@exemplo.com">
+          <p class="field-error" *ngIf="inviteForm.controls.email.touched && inviteForm.controls.email.invalid">Informe um email válido.</p>
+        </div>
+        <div class="field invite-role-field">
+          <label for="invite-role">Papel no projeto</label>
+          <select id="invite-role" formControlName="role">
+            <option *ngFor="let role of roles" [value]="role">{{ roleLabels[role] }}</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary invite-submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Enviando...' : 'Enviar convite' }}
+        </button>
       </form>
-      <p class="field-error" *ngIf="inviteForm.controls.email.touched && inviteForm.controls.email.invalid">Informe um email válido.</p>
-      <div class="link-actions"><button type="button" class="btn-secondary" *ngFor="let role of roles" (click)="generateLink(role)">Gerar link {{ role }}</button></div>
-      <div class="link-actions"><button type="button" class="btn-secondary" *ngFor="let role of roles" [disabled]="isSubmitting" (click)="importGithub(role)">Importar GitHub como {{ role }}</button></div>
-    </section>
 
-    <section class="card"><h2 class="card-heading">Membros</h2>
-      <div class="member-row"><span>{{ project.owner.fullName || project.owner.username }}</span><span class="pill">DONO</span></div>
-      <div class="member-row" *ngFor="let member of project.members">
-        <span>{{ member.user.fullName || member.user.username }}</span>
-        <div class="member-actions"><select *ngIf="canManage" [value]="member.role" (change)="changeRole(member.id, $any($event.target).value)"><option *ngFor="let role of roles" [value]="role">{{ role }}</option></select><span class="pill pill-muted" *ngIf="!canManage">{{ member.role }}</span><button type="button" class="btn-danger" *ngIf="canManage" (click)="remove(member.id, member.user.fullName || member.user.username)">Remover</button></div>
+      <div class="invite-action-group">
+        <p class="action-label">Link compartilhável</p>
+        <div class="link-actions">
+          <button type="button" class="btn-secondary" *ngFor="let role of roles" (click)="generateLink(role)">
+            Gerar para {{ roleLabels[role] }}
+          </button>
+        </div>
+      </div>
+      <div class="generated-invite-link" *ngIf="generatedInviteLink">
+        <label for="generated-invite-link">Link de convite para {{ generatedInviteRole ? roleLabels[generatedInviteRole] : '' }}</label>
+        <div class="generated-invite-link-controls">
+          <input id="generated-invite-link" type="text" [value]="generatedInviteLink" readonly aria-label="Link de convite gerado">
+          <button type="button" class="btn-primary" (click)="copyGeneratedInviteLink()">Copiar link</button>
+        </div>
+        <p class="field-hint" aria-live="polite" *ngIf="linkCopyMessage">{{ linkCopyMessage }}</p>
+      </div>
+
+      <div class="invite-action-group">
+        <p class="action-label">Colaboradores do GitHub</p>
+        <div class="link-actions">
+          <button type="button" class="btn-secondary" *ngFor="let role of roles" [disabled]="isSubmitting" (click)="importGithub(role)">
+            Importar como {{ roleLabels[role] }}
+          </button>
+        </div>
       </div>
     </section>
 
-    <section class="card" *ngIf="canManage"><h2 class="card-heading">Convites pendentes</h2><p *ngIf="!invites.length">Nenhum convite pendente.</p><div class="member-row" *ngFor="let invite of invites"><span>{{ invite.email || 'Link compartilhável' }}</span><span class="pill pill-muted">{{ invite.role }}</span></div></section>
+    <section class="card"><h2 class="card-heading">Membros</h2>
+      <div class="member-row">
+        <div class="member-info">
+          <span class="member-avatar">{{ initials(project.owner.fullName || project.owner.username) }}</span>
+          <span class="member-copy"><strong>{{ project.owner.fullName || project.owner.username }}</strong><small>{{ project.owner.email }}</small></span>
+        </div>
+        <span class="pill">Dono</span>
+      </div>
+      <div class="member-row" *ngFor="let member of members">
+        <div class="member-info">
+          <span class="member-avatar">{{ initials(member.user.fullName || member.user.username) }}</span>
+          <span class="member-copy"><strong>{{ member.user.fullName || member.user.username }}</strong><small>{{ member.user.email }}</small></span>
+        </div>
+        <div class="member-actions">
+          <select *ngIf="canManage" [value]="member.role" [attr.aria-label]="'Papel de ' + (member.user.fullName || member.user.username)" (change)="changeRole(member.id, $any($event.target).value)">
+            <option *ngFor="let role of roles" [value]="role">{{ roleLabels[role] }}</option>
+          </select>
+          <span class="pill pill-muted" *ngIf="!canManage">{{ roleLabels[member.role] }}</span>
+          <button type="button" class="btn-danger" *ngIf="canManage" (click)="remove(member.id, member.user.fullName || member.user.username)">Remover</button>
+        </div>
+      </div>
+      <p class="empty-copy" *ngIf="!members.length">Nenhum outro membro entrou neste projeto.</p>
+    </section>
+
+    <section class="card" *ngIf="canManage"><h2 class="card-heading">Convites pendentes</h2><p class="empty-copy" *ngIf="!invites.length">Nenhum convite pendente neste projeto.</p><div class="member-row" *ngFor="let invite of invites"><span>{{ invite.email || 'Link compartilhável' }}</span><span class="pill pill-muted">{{ roleLabels[invite.role] }}</span></div></section>
   </ng-container>
 </div></main>
