@@ -46,6 +46,9 @@ app:
 
   base-url: ${APP_BASE_URL:http://localhost:4200}
 
+  mail:
+    from: ${MAIL_FROM:${MAIL_USER:}}
+
   password-reset:
     expiration-hours: 24
     max-attempts: 5

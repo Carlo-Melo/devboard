@@ -20,12 +20,16 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${app.mail.from}")
+    private String from;
+
     @Async("emailExecutor")
     public void sendPasswordResetEmail(User user, String rawToken) {
         String link = baseUrl + "/reset-password?token=" + rawToken;
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(from);
             message.setTo(user.getEmail());
             message.setSubject("Recuperação de senha no devBoard");
             message.setText("""
@@ -50,6 +54,7 @@ public class EmailService {
     public void sendProjectInviteEmail(ProjectInvite invite) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(from);
             message.setTo(invite.getEmail());
             message.setSubject("Convite para projeto no devBoard");
             String inviterName = invite.getInvitedBy().getFullName() != null
