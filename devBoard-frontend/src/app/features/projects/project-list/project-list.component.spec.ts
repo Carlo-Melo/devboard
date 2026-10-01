@@ -40,7 +40,7 @@ describe('ProjectListComponent', () => {
 
   it('should load projects on init', () => {
     const projects: ProjectSummaryResponse[] = [{
-      id: 1, name: 'Projeto X', owner, memberCount: 0, githubLinked: false, updatedAt: new Date().toISOString()
+      id: 1, name: 'Projeto X', owner, memberCount: 0, boardCount: 1, githubBoardCount: 0, updatedAt: new Date().toISOString()
     }];
     projectServiceSpy.list.and.returnValue(of(pageOf(projects)));
 

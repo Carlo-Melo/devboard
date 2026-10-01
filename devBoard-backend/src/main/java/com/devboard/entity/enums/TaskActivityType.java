@@ -5,6 +5,7 @@ package com.devboard.entity.enums;
  * são Sprint 2/3) — tipos de atividade ligados a eles entram junto com esses módulos.
  */
 public enum TaskActivityType {
+    GITHUB_ISSUE_LINKED, BRANCH_CREATED, COMMIT_RECEIVED, PR_OPENED, PR_MERGED, PR_CLOSED, LABELS_CHANGED, WIP_EXCEEDED,
     CREATED,
     TITLE_CHANGED,
     DESCRIPTION_CHANGED,

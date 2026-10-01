@@ -14,8 +14,11 @@ import lombok.ToString;
 public class RegisterRequest {
 
     @NotBlank(message = "Username é obrigatório")
-    @Size(min = 3, max = 50, message = "Username deve ter entre 3 e 50 caracteres")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username deve conter apenas letras, números e underscore, sem espaços")
+    @Size(min = 1, max = 39, message = "Username deve ter entre 1 e 39 caracteres")
+    @Pattern(
+            regexp = "^(?!-)(?!.*--)[a-zA-Z0-9-]+(?<!-)$",
+            message = "Username deve usar apenas letras, números e hífens, sem hífen no início, fim ou duplicado"
+    )
     private String username;
 
     @NotBlank(message = "Email é obrigatório")

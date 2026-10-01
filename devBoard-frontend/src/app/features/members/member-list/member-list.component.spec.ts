@@ -17,7 +17,7 @@ describe('MemberListComponent', () => {
     const projectService = jasmine.createSpyObj<ProjectService>('ProjectService', ['getById']);
     projectService.getById.and.returnValue(of({
       id: 1, name: 'Projeto', owner: { id: 2, username: 'owner', email: 'owner@example.com', authProvider: 'TRADITIONAL', githubConnected: false },
-      currentUserRole: 'ADMIN', currentUserOwner: true, watchedBranches: [], defaultBaseBranch: 'main', archived: false,
+      currentUserRole: 'ADMIN', currentUserOwner: true, archived: false,
       members: [], boards: [], createdAt: '2026-01-01', updatedAt: '2026-01-01'
     } as any));
 
@@ -90,9 +90,10 @@ describe('MemberListComponent', () => {
     const fixture = TestBed.createComponent(MemberListComponent);
     fixture.detectChanges();
 
+    fixture.componentInstance.importBoardId = 7;
     fixture.componentInstance.importGithub('VIEWER');
 
-    expect(memberService.importGithub).toHaveBeenCalledWith(1, 'VIEWER');
+    expect(memberService.importGithub).toHaveBeenCalledWith(7, 'VIEWER');
     expect(fixture.componentInstance.successMessage).toContain('2 membro(s) adicionado(s)');
   });
 

@@ -11,6 +11,13 @@ import java.time.LocalDate;
 @Builder
 public class TaskSummaryResponse {
 
+    private Long githubIssueId;
+    private String githubIssueUrl;
+    private Long githubPrId;
+    private String githubPrUrl;
+    private String githubPrState;
+    private String branch;
+    private java.util.List<com.devboard.dto.label.LabelResponse> labels;
     private Long id;
     private String title;
     private String type;

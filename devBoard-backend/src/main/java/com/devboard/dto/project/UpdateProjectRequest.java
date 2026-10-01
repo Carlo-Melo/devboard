@@ -15,7 +15,5 @@ public class UpdateProjectRequest {
 
     private String description;
 
-    private List<String> watchedBranches;
 
-    private String defaultBaseBranch;
 }

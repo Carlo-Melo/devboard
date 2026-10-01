@@ -26,10 +26,42 @@
           <h2 class="card-heading">Quadros do projeto</h2><p class="card-intro">Escolha um quadro para acompanhar o trabalho.</p>
           <a class="member-row board-link" *ngFor="let board of project.boards" [routerLink]="['/boards', board.id]">
             <div class="member-info">
-              <span>{{ board.name }}</span>
+              <span>{{ board.name }}</span><span class="pill pill-muted" *ngIf="board.githubLinked">GitHub</span>
               <span class="pill pill-muted" *ngIf="board.defaultBoard">Padrão</span>
             </div>
           </a>
+          <form class="board-create-form" *ngIf="canEdit" [formGroup]="boardForm" (ngSubmit)="createBoard()" novalidate>
+            <div class="field-row">
+              <div class="field">
+                <label for="board-name">Novo board</label>
+                <input
+                  id="board-name"
+                  type="text"
+                  formControlName="name"
+                  placeholder="Frontend, Backend, Planejamento…"
+                  autocomplete="off"
+                  maxlength="100"
+                  required
+                  [attr.aria-invalid]="boardForm.controls.name.touched && boardForm.controls.name.invalid"
+                  [attr.aria-describedby]="boardForm.controls.name.touched && boardForm.controls.name.invalid ? 'board-name-error' : 'board-name-hint'"
+                >
+                <p id="board-name-hint" class="field-hint" *ngIf="!boardForm.controls.name.touched || boardForm.controls.name.valid">De 3 a 100 caracteres.</p>
+                <p id="board-name-error" class="field-error" *ngIf="boardForm.controls.name.touched && boardForm.controls.name.invalid">Informe um nome de 3 a 100 caracteres.</p>
+              </div>
+              <div class="field">
+                <label for="board-description">Descrição <span class="field-hint">(opcional)</span></label>
+                <input id="board-description" type="text" formControlName="description" placeholder="Objetivo deste quadro">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary" [disabled]="creatingBoard || boardForm.invalid" [attr.aria-busy]="creatingBoard">
+                <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                {{ creatingBoard ? 'Criando…' : 'Criar board' }}
+              </button>
+            </div>
+          </form>
         </div>
 
         <div class="card">
@@ -42,14 +74,7 @@
             <span>Seu papel</span>
             <span>{{ project.currentUserRole === 'ADMIN' ? 'Administrador' : project.currentUserRole === 'DEVELOPER' ? 'Desenvolvedor' : 'Visualizador' }}</span>
           </div>
-          <div class="info-row">
-            <span>GitHub</span>
-            <span>{{ project.githubRepoName || 'Não vinculado' }}</span>
-          </div>
-          <div class="info-row">
-            <span>Branch base</span>
-            <span>{{ project.defaultBaseBranch }}</span>
-          </div>
+          <div class="info-row"><span>Boards</span><span>{{ project.boards.length }}</span></div>
         </div>
 
         <div class="card">

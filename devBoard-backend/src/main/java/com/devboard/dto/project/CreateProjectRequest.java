@@ -15,9 +15,6 @@ public class CreateProjectRequest {
 
     private String description;
 
-    private Long githubRepoId;
 
-    private List<String> watchedBranches;
 
-    private String defaultBaseBranch;
 }

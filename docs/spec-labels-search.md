@@ -11,7 +11,7 @@
 
 Dois recursos complementares que tornam o quadro utilizável à medida que o volume de tarefas cresce:
 
-- **Labels**: categorização livre e visual, definida por projeto e sincronizável com as labels do GitHub.
+- **Labels**: categorização livre e visual, definida por projeto e sincronizável com as labels dos repositórios vinculados aos boards.
 - **Busca e filtros**: encontrar tarefas específicas sem depender de leitura visual do quadro.
 
 ---
@@ -22,7 +22,7 @@ Dois recursos complementares que tornam o quadro utilizável à medida que o vol
 - Criar, editar e excluir labels do projeto
 - Conjunto de labels sugeridas na criação do projeto
 - Aplicar e remover labels em tarefas
-- Sincronizar labels com o repositório GitHub vinculado
+- Sincronizar labels com o repositório GitHub do board de cada tarefa
 - Busca textual em tarefas
 - Filtros combinados
 - Ordenação de resultados
@@ -46,15 +46,32 @@ Dois recursos complementares que tornam o quadro utilizável à medida que o vol
 | nome | texto | obrigatório, 1–50 caracteres, único dentro do projeto (sem distinção de maiúsculas) |
 | cor | texto | código hexadecimal; obrigatório |
 | descrição | texto | opcional |
-| github label name | texto | opcional; nome correspondente no repositório vinculado |
 | criado em / atualizado em | timestamp | automático |
 
 **Regras**
 - Labels pertencem ao projeto, não ao quadro. Todas as tarefas do projeto podem usá-las.
 - Excluir uma label a remove de todas as tarefas que a usavam; as tarefas permanecem.
 - A cor é obrigatória porque a label existe para ser reconhecida visualmente no card.
+- Uma label do projeto pode ter um mapeamento GitHub diferente para cada board que possua repositório. Não existe um único `github label name` no nível do projeto.
 
-### 3.2 Conjunto sugerido
+### 3.2 Mapeamento de label com GitHub
+
+O mapeamento existe apenas quando uma label do projeto precisa ser sincronizada com o repositório de um board.
+
+| Campo | Tipo | Regra |
+|---|---|---|
+| label | referência | obrigatório; pertence ao mesmo projeto do board |
+| board | referência | obrigatório; deve possuir repositório GitHub vinculado |
+| github label id | numérico | obrigatório após a sincronização; identificador da label no repositório |
+| github label name | texto | obrigatório após a sincronização; nome correspondente no repositório daquele board |
+| criado em / atualizado em | timestamp | automático |
+
+**Regras**
+- Existe no máximo um mapeamento por par `label + board`.
+- O mesmo nome de label pode mapear para labels distintas em repositórios diferentes.
+- Labels de tarefas em boards sem repositório continuam locais e não geram mapeamento.
+
+### 3.3 Conjunto sugerido
 
 Criado junto com o projeto. O usuário pode editar ou excluir livremente.
 
@@ -67,20 +84,22 @@ Criado junto com o projeto. O usuário pode editar ou excluir livremente.
 | urgent | demanda prioridade imediata |
 | blocked | impedida por dependência externa |
 
-### 3.3 Sincronização com o GitHub
+### 3.4 Sincronização com o GitHub
 
-Quando o projeto tem repositório vinculado:
+Quando uma tarefa está em board com repositório vinculado e possui issue vinculada, a sincronização usa exclusivamente o repositório daquele board:
 
 | Origem | Comportamento |
 |---|---|
-| Label criada no devBoard | criada no repositório com mesmo nome e cor, se ainda não existir |
-| Label aplicada a tarefa com issue vinculada | aplicada também à issue |
-| Label removida de tarefa com issue vinculada | removida também da issue |
-| Labels alteradas na issue no GitHub | refletidas na tarefa; labels inexistentes no projeto são criadas automaticamente |
+| Label criada no devBoard | criada apenas no projeto; não dispara criação em todos os repositórios |
+| Label aplicada a tarefa com issue vinculada | cria ou encontra a label no repositório do board, registra o mapeamento e aplica à issue |
+| Label removida de tarefa com issue vinculada | remove a label da issue no repositório do board |
+| Labels alteradas na issue no GitHub | refletidas na tarefa; labels inexistentes no projeto são criadas automaticamente e mapeadas para o board do evento |
 
 Falhas de sincronização não bloqueiam a operação local — são registradas em log.
 
-### 3.4 Endpoints
+Ao editar ou excluir uma label do projeto, as alterações em issues vinculadas são enfileiradas separadamente para cada board que possua tarefas afetadas. Falhas em um repositório não impedem a atualização local nem a sincronização dos demais.
+
+### 3.5 Endpoints
 
 | Endpoint | Descrição | Permissão |
 |---|---|---|
@@ -173,7 +192,7 @@ Atalhos expostos ao usuário, montados sobre o mesmo endpoint de busca:
 2. Digita um nome que ainda não existe.
 3. Sistema oferece criar a label ali mesmo, com cor sugerida.
 4. Label é criada no projeto e aplicada à tarefa.
-5. Se o projeto tem repositório vinculado, a label é criada também no GitHub.
+5. Se a tarefa possui issue vinculada em board com repositório, a label é criada ou localizada somente nesse repositório e aplicada à issue.
 
 ### 5.2 Busca combinada
 1. Usuário busca por um termo e adiciona filtros de responsável e prioridade.
@@ -185,7 +204,7 @@ Atalhos expostos ao usuário, montados sobre o mesmo endpoint de busca:
 1. Admin exclui uma label.
 2. Sistema remove a associação de todas as tarefas que a usavam.
 3. As tarefas continuam existindo, apenas sem aquela label.
-4. Se houver issues vinculadas, a label é removida delas no GitHub.
+4. Se houver issues vinculadas, a label é removida delas no repositório de cada board correspondente.
 
 ---
 
@@ -195,8 +214,10 @@ Atalhos expostos ao usuário, montados sobre o mesmo endpoint de busca:
 - [ ] Nome de label duplicado no projeto é rejeitado, ignorando maiúsculas
 - [ ] Excluir label a remove das tarefas sem excluí-las
 - [ ] Label de outro projeto não pode ser aplicada à tarefa
-- [ ] Label criada no devBoard aparece no repositório GitHub vinculado
-- [ ] Label alterada na issue do GitHub reflete na tarefa
+- [ ] Label criada no devBoard não cria cópias desnecessárias em todos os repositórios do projeto
+- [ ] Label aplicada a tarefa com issue é criada ou localizada apenas no repositório do board daquela tarefa
+- [ ] Uma mesma label do projeto pode ter mapeamentos distintos em boards com repositórios diferentes
+- [ ] Label alterada em issue do GitHub reflete na tarefa do board correspondente
 - [ ] Falha na sincronização de label não impede a operação local
 - [ ] Busca textual encontra por título e por descrição, sem distinção de maiúsculas
 - [ ] Filtros combinados funcionam em conjunto, não isoladamente

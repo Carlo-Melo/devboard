@@ -43,7 +43,7 @@ O GitHub OAuth é estratégico: o token obtido é reutilizado pelos módulos de 
 | Campo | Tipo | Regra |
 |---|---|---|
 | id | identificador | gerado pelo sistema |
-| username | texto | único, 3–50 caracteres, alfanumérico + underscore |
+| username | texto | único, 1–39 caracteres, letras, números e hífen; sem hífen no início, fim ou duplicado |
 | email | texto | único, formato de email válido |
 | senha | texto | hash BCrypt; nulo quando origem = GITHUB |
 | nome completo | texto | opcional |
@@ -87,7 +87,7 @@ Todos sob `/api/auth`. Nenhum exige autenticação, exceto onde indicado.
 **Entrada**: username, email, senha, confirmação de senha, nome completo (opcional)
 
 **Validações**
-- username: obrigatório, 3–50 caracteres, único, sem espaços
+- username: obrigatório, 1–39 caracteres, único, com letras, números e hífen; sem hífen no início, fim ou duplicado
 - email: obrigatório, formato válido, único
 - senha: obrigatória, mínimo 8 caracteres, ao menos uma maiúscula, uma minúscula e um número
 - confirmação deve ser idêntica à senha

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  { path: 'boards/:id/settings', canActivate: [authGuard], loadComponent: () => import('./features/board/board-settings/board-settings.component').then(m => m.BoardSettingsComponent) },
   { path: '', redirectTo: 'projects', pathMatch: 'full' },
   {
     path: 'login',

@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { BoardService } from '../../../core/services/board.service';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProjectService } from '../../../core/services/project.service';
@@ -8,12 +10,14 @@ import { ApiError } from '../../../core/models/api-error.model';
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.scss'
 })
 export class ProjectDetailComponent implements OnInit {
 
+  readonly boardForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]], description: [''] });
+  creatingBoard = false;
   project: ProjectResponse | null = null;
   isLoading = true;
   errorMessage: string | null = null;
@@ -21,6 +25,8 @@ export class ProjectDetailComponent implements OnInit {
 
   constructor(
     private projectService: ProjectService,
+    private boards: BoardService,
+    private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -51,6 +57,15 @@ export class ProjectDetailComponent implements OnInit {
           : 'Não foi possível carregar o projeto.';
         this.isLoading = false;
       }
+    });
+  }
+
+  createBoard(): void {
+    if (!this.project || this.boardForm.invalid || this.creatingBoard) { this.boardForm.markAllAsTouched(); return; }
+    this.creatingBoard = true;
+    this.boards.create(this.project.id, this.boardForm.getRawValue()).subscribe({
+      next: board => { this.creatingBoard = false; this.router.navigate(['/boards', board.id]); },
+      error: (error: ApiError) => { this.creatingBoard = false; this.errorMessage = error.message; }
     });
   }
 

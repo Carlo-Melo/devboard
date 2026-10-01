@@ -108,11 +108,14 @@ export class MemberListComponent implements OnInit {
     }
   }
 
+  importBoardId: number | null = null;
+
   importGithub(role: ProjectRole): void {
     if (!this.project) return;
     this.isSubmitting = true;
     this.errorMessage = null;
-    this.memberService.importGithub(this.project.id, role).subscribe({
+    if (!this.importBoardId) { this.isSubmitting = false; this.errorMessage = "Selecione um board vinculado ao GitHub."; return; }
+    this.memberService.importGithub(this.importBoardId, role).subscribe({
       next: (result: GithubImportResponse) => {
         this.isSubmitting = false;
         this.successMessage = `${result.added} membro(s) adicionado(s), ${result.invited} convite(s) enviado(s) e ${result.ignored} ignorado(s).`;

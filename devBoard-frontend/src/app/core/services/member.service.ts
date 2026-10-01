@@ -25,8 +25,8 @@ export class MemberService {
     return this.http.post<InviteResponse>(`${this.projectsUrl}/${projectId}/members/invite-link`, { role });
   }
 
-  importGithub(projectId: number, role: ProjectRole, logins?: string[]): Observable<GithubImportResponse> {
-    return this.http.post<GithubImportResponse>(`${this.projectsUrl}/${projectId}/members/import-github`, { role, logins });
+  importGithub(boardId: number, role: ProjectRole, logins?: string[]): Observable<GithubImportResponse> {
+    return this.http.post<GithubImportResponse>(`${environment.apiUrl}/boards/${boardId}/members/import-github`, { role, logins });
   }
 
   listInvites(projectId: number, status?: InviteStatus): Observable<InviteResponse[]> {

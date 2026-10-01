@@ -33,4 +33,6 @@ public class CreateTaskRequest {
     private LocalDate dueDate;
 
     private Integer estimate;
+    private Long githubIssueId;
+    private List<Long> labelIds;
 }

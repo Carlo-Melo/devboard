@@ -20,15 +20,14 @@ public class ProjectMapper {
 
     private final UserMapper userMapper;
 
-    public ProjectSummaryResponse toSummary(Project project, long memberCount) {
+    public ProjectSummaryResponse toSummary(Project project, long memberCount, long boardCount, long githubBoardCount) {
         return ProjectSummaryResponse.builder()
                 .id(project.getId())
                 .name(project.getName())
                 .description(project.getDescription())
                 .owner(userMapper.toResponse(project.getOwner()))
                 .memberCount(memberCount)
-                .githubLinked(project.hasGithubRepo())
-                .lastSyncAt(project.getLastSyncAt())
+                .boardCount(boardCount).githubBoardCount(githubBoardCount)
                 .updatedAt(project.getUpdatedAt())
                 .build();
     }
@@ -42,14 +41,7 @@ public class ProjectMapper {
                 .owner(userMapper.toResponse(project.getOwner()))
                 .currentUserRole(currentUserRole.name())
                 .currentUserOwner(currentUserOwner)
-                .githubRepoId(project.getGithubRepoId())
-                .githubRepoOwner(project.getGithubRepoOwner())
-                .githubRepoName(project.getGithubRepoName())
-                .githubRepoUrl(project.getGithubRepoUrl())
-                .watchedBranches(new ArrayList<>(project.getWatchedBranches()))
-                .defaultBaseBranch(project.getDefaultBaseBranch())
                 .archived(project.getArchived())
-                .lastSyncAt(project.getLastSyncAt())
                 .members(members.stream().map(this::toMemberResponse).toList())
                 .boards(boards.stream().map(this::toBoardSummary).toList())
                 .createdAt(project.getCreatedAt())
@@ -72,7 +64,7 @@ public class ProjectMapper {
         return BoardSummaryResponse.builder()
                 .id(board.getId())
                 .name(board.getName())
-                .defaultBoard(board.getIsDefault())
+                .defaultBoard(board.getIsDefault()).githubLinked(board.hasGithubRepo())
                 .build();
     }
 }

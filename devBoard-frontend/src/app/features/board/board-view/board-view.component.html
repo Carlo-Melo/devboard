@@ -9,7 +9,24 @@
       <a [routerLink]="['/projects', board.projectId]" class="back-link">&larr; Voltar ao projeto</a>
 
       <div class="topbar">
-        <div><p class="eyebrow">TRABALHO EM MOVIMENTO</p><h1>{{ board.name }}</h1><p class="page-subtitle">Cada tarefa, no seu próximo passo.</p></div><span class="pill">▥ Quadro Kanban</span>
+        <div>
+          <p class="eyebrow">TRABALHO EM MOVIMENTO</p>
+          <h1>{{ board.name }} <span class="pill" *ngIf="board.defaultBoard">Padrão</span></h1>
+          <p class="page-subtitle">Cada tarefa, no seu próximo passo.</p>
+          <p class="page-subtitle" *ngIf="board.githubRepoName">{{ board.githubRepoOwner }}/{{ board.githubRepoName }}</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="pill">▥ Quadro Kanban</span>
+          <a class="btn-secondary" [routerLink]="['/boards', board.id, 'settings']">
+            <svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+              <path d="M4 7h6m4 0h6M4 12h10m4 0h2M4 17h2m4 0h10" />
+              <circle cx="12" cy="7" r="2" />
+              <circle cx="16" cy="12" r="2" />
+              <circle cx="8" cy="17" r="2" />
+            </svg>
+            Configurações do board
+          </a>
+        </div>
       </div>
 
       <div class="board-filters">

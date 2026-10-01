@@ -14,5 +14,13 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     Optional<Board> findByProjectIdAndIsDefaultTrue(Long projectId);
 
+    Optional<Board> findByGithubRepoId(Long githubRepoId);
+    boolean existsByGithubRepoId(Long githubRepoId);
+    boolean existsByProjectIdAndNameAndIdNot(Long projectId, String name, Long id);
+    boolean existsByProjectIdAndName(Long projectId, String name);
+    long countByProjectIdAndGithubRepoIdIsNotNull(Long projectId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select b from Board b where b.id = :id")
+    Optional<Board> findLockedById(@org.springframework.data.repository.query.Param("id") Long id);
     long countByProjectId(Long projectId);
 }

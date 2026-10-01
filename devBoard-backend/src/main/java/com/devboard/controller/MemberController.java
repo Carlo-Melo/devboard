@@ -48,12 +48,12 @@ public class MemberController {
                 .body(memberService.createInviteLink(projectId, request.getRole(), user.getId()));
     }
 
-    @PostMapping("/api/projects/{projectId}/members/import-github")
-    public ResponseEntity<GithubImportResponse> importGithub(@PathVariable Long projectId,
+    @PostMapping("/api/boards/{boardId}/members/import-github")
+    public java.util.concurrent.Callable<ResponseEntity<GithubImportResponse>> importGithub(@PathVariable Long boardId,
                                                                @Valid @RequestBody ImportGithubMembersRequest request,
                                                                @AuthenticationPrincipal SecurityUser user) {
-        return ResponseEntity.ok(memberService.importGithubCollaborators(
-                projectId, request.getRole(), request.getLogins(), user.getId()));
+        return () -> ResponseEntity.ok(memberService.importGithubCollaborators(
+                boardId, request.getRole(), request.getLogins(), user.getId()));
     }
 
     @GetMapping("/api/projects/{projectId}/members")

@@ -59,7 +59,8 @@ public class SecurityConfig {
                                 "/api/auth/github/**",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password/**",
-                                "/api/health"
+                                "/api/health",
+                                "/webhook/github"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/invites/*").permitAll()
                         .anyRequest().authenticated()

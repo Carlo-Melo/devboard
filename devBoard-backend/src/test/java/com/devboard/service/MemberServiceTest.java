@@ -48,6 +48,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
 
+    @Mock private com.devboard.repository.BoardRepository boardRepository;
     @Mock private ProjectRepository projectRepository;
     @Mock private ProjectMemberRepository projectMemberRepository;
     @Mock private ProjectInviteRepository projectInviteRepository;
@@ -208,9 +209,10 @@ class MemberServiceTest {
 
     @Test
     void importGithubCollaborators_deveAdicionarUsuarioEncontradoPorEmail() {
-        project.setGithubRepoId(22L);
-        project.setGithubRepoOwner("devboard");
-        project.setGithubRepoName("api");
+        com.devboard.entity.Board board = new com.devboard.entity.Board();
+        board.setId(30L); board.setProject(project); board.setGithubRepoId(22L);
+        board.setGithubRepoOwner("devboard"); board.setGithubRepoName("api");
+        when(boardRepository.findById(30L)).thenReturn(Optional.of(board));
         actor.setGithubToken("token-github");
         User existingUser = user(7L, "colaborador@example.com");
 
@@ -221,11 +223,12 @@ class MemberServiceTest {
         when(projectMemberRepository.existsByProjectIdAndUserId(10L, 7L)).thenReturn(false);
 
         GithubImportResponse result = memberService.importGithubCollaborators(
-                10L, ProjectRole.DEVELOPER, null, 2L);
+                30L, ProjectRole.DEVELOPER, null, 2L);
 
         ArgumentCaptor<ProjectMember> captor = ArgumentCaptor.forClass(ProjectMember.class);
         verify(projectMemberRepository).save(captor.capture());
         assertThat(captor.getValue().getUser()).isSameAs(existingUser);
+        assertThat(captor.getValue().getProject()).isSameAs(project);
         assertThat(result.getAdded()).isEqualTo(1);
         assertThat(result.getInvited()).isZero();
         assertThat(result.getIgnored()).isZero();

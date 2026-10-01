@@ -45,8 +45,13 @@
 
       <div class="invite-action-group">
         <p class="action-label">Colaboradores do GitHub</p>
+        <label for="import-board">Board de origem</label>
+        <select id="import-board" #githubBoard (change)="importBoardId = +githubBoard.value">
+          <option value="">Selecione um board com GitHub</option>
+          <ng-container *ngFor="let board of project.boards"><option *ngIf="board.githubLinked" [value]="board.id">{{ board.name }}</option></ng-container>
+        </select>
         <div class="link-actions">
-          <button type="button" class="btn-secondary" *ngFor="let role of roles" [disabled]="isSubmitting" (click)="importGithub(role)">
+          <button type="button" class="btn-secondary" *ngFor="let role of roles" [disabled]="isSubmitting || !importBoardId" (click)="importGithub(role)">
             Importar como {{ roleLabels[role] }}
           </button>
         </div>

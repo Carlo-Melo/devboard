@@ -28,7 +28,7 @@ As specs não contêm código. O padrão de implementação vive em um único lu
 **Sempre**: `claude.md` primeiro. Depois, a spec do que você vai construir, junto com as specs das quais ela depende.
 
 ```
-claude.md
+claude.md/agents.md
    │
    ├── spec-authentication.md          ← base, sem dependências
    │

@@ -10,11 +10,11 @@
 
       <div class="field">
         <label for="username">Username</label>
-        <input id="username" type="text" formControlName="username" autocomplete="username" />
+        <input id="username" type="text" formControlName="username" autocomplete="username" maxlength="39" spellcheck="false" />
         <div class="field-error" *ngIf="f['username'].invalid && f['username'].touched">
           <span *ngIf="f['username'].errors?.['required']">Username é obrigatório</span>
-          <span *ngIf="f['username'].errors?.['minlength'] || f['username'].errors?.['maxlength']">Username deve ter entre 3 e 50 caracteres</span>
-          <span *ngIf="f['username'].errors?.['pattern']">Apenas letras, números e underscore, sem espaços</span>
+          <span *ngIf="f['username'].errors?.['minlength'] || f['username'].errors?.['maxlength']">Username deve ter entre 1 e 39 caracteres</span>
+          <span *ngIf="f['username'].errors?.['pattern']">Use letras, números e hífens, sem hífen no início, fim ou duplicado</span>
           <span *ngIf="f['username'].errors?.['server']">{{ f['username'].errors?.['server'] }}</span>
         </div>
       </div>

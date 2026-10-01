@@ -16,7 +16,7 @@ describe('BoardViewComponent', () => {
       id: 1,
       projectId: 7,
       name: 'Main Board',
-      defaultBoard: true,
+      defaultBoard: true, watchedBranches: [], defaultBaseBranch: 'main', githubReauthRequired: false,
       columns: [
         { id: 1, name: 'Backlog', position: 0, role: 'BACKLOG', taskCount: 0, tasks: [] },
         { id: 2, name: 'To-Do', position: 1, role: 'TODO', taskCount: 3, wipLimit: 2, tasks: [] }

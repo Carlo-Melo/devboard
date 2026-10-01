@@ -31,4 +31,14 @@ describe('AppShellComponent', () => {
     expect(auth.removeToken).toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith('/login');
   });
+
+  it('keeps the create-project action in the desktop navigation', () => {
+    const fixture = TestBed.createComponent(AppShellComponent);
+    fixture.detectChanges();
+
+    const createProjectLink = fixture.nativeElement.querySelector('nav a[aria-label="Criar projeto"]') as HTMLAnchorElement | null;
+
+    expect(createProjectLink).toBeTruthy();
+    expect(createProjectLink?.getAttribute('href')).toContain('/projects/new');
+  });
 });

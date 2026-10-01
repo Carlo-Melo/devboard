@@ -18,8 +18,6 @@ describe('ProjectFormComponent', () => {
       owner,
       currentUserRole: 'ADMIN',
       currentUserOwner: true,
-      watchedBranches: [],
-      defaultBaseBranch: 'main',
       archived: false,
       members: [],
       boards: [],

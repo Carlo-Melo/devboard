@@ -27,6 +27,7 @@ public class GithubOAuthService {
 
     private static final String OAUTH_SCOPES = "repo user:email";
     private static final String DEFAULT_RETURN_URL = "/projects";
+    private static final int GITHUB_USERNAME_MAX_LENGTH = 39;
 
     private final UserRepository userRepository;
     private final AuthService authService;
@@ -54,6 +55,7 @@ public class GithubOAuthService {
                 .queryParam("scope", OAUTH_SCOPES)
                 .queryParam("state", state)
                 .build()
+                .encode()
                 .toUriString();
     }
 
@@ -105,10 +107,22 @@ public class GithubOAuthService {
         String candidate = githubLogin;
         int suffix = 2;
         while (userRepository.existsByUsername(candidate)) {
-            candidate = githubLogin + suffix;
-            suffix++;
+            candidate = withNumericSuffix(githubLogin, suffix++);
         }
         return candidate;
+    }
+
+    /** Mantém o username derivado do GitHub dentro do limite de 39 caracteres em caso de colisão. */
+    private String withNumericSuffix(String githubLogin, int suffix) {
+        String suffixValue = String.valueOf(suffix);
+        int maxBaseLength = GITHUB_USERNAME_MAX_LENGTH - suffixValue.length();
+        String base = githubLogin.substring(0, Math.min(githubLogin.length(), maxBaseLength));
+
+        while (base.endsWith("-")) {
+            base = base.substring(0, base.length() - 1);
+        }
+
+        return base + suffixValue;
     }
 
     private String buildFrontendRedirectUrl(AuthResponse authResponse, String redirectUri) {

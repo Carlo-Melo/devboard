@@ -75,6 +75,9 @@ class TaskServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock private com.devboard.service.github.TaskGithubService githubService;
+    @Mock private LabelService labelService;
+
     @InjectMocks
     private TaskService taskService;
 
@@ -420,6 +423,7 @@ class TaskServiceTest {
         Project otherProject = new Project();
         otherProject.setId(999L);
         Board otherBoard = new Board();
+        otherBoard.setId(999L);
         otherBoard.setProject(otherProject);
         BoardColumn otherColumn = new BoardColumn();
         otherColumn.setId(5L);

@@ -9,7 +9,16 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
+    List<Task> findByLabelsId(Long labelId);
 
+    List<Task> findByColumnBoardId(Long boardId);
+    boolean existsByColumnBoardId(Long boardId);
+    List<Task> findByColumnBoardIdAndArchivedFalse(Long boardId);
+    Optional<Task> findByColumnBoardIdAndGithubIssueId(Long boardId, Long issueId);
+    boolean existsByColumnBoardIdAndArchivedFalse(Long boardId);
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Task t where t.id = :id")
+    Optional<Task> findLockedById(@Param("id") Long id);
     List<Task> findByColumnIdAndArchivedFalseOrderByPositionAsc(Long columnId);
 
     long countByColumnIdAndArchivedFalse(Long columnId);
@@ -18,7 +27,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * Leitura do quadro: uma única consulta com JOIN FETCH para todas as colunas do board,
      * nunca uma consulta por coluna nem por tarefa (claude.md — Paginação).
      */
-    @Query("SELECT t FROM Task t LEFT JOIN FETCH t.assignee "
+    @Query("SELECT DISTINCT t FROM Task t LEFT JOIN FETCH t.assignee LEFT JOIN FETCH t.labels "
             + "WHERE t.column.id IN :columnIds AND t.archived = false "
             + "ORDER BY t.position ASC")
     List<Task> findByColumnIdInAndArchivedFalseOrderByPosition(@Param("columnIds") List<Long> columnIds);

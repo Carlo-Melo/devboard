@@ -74,6 +74,11 @@ public class GlobalExceptionHandler {
                 .body(body);
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleIntegrity(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Vínculo duplicado ou recurso ainda em uso", request, null);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest request) {
         log.error("Erro não tratado em {}", request.getRequestURI(), ex);

@@ -61,6 +61,7 @@ public class BoardService {
     private final TaskCommentRepository taskCommentRepository;
     private final PermissionService permissionService;
     private final BoardMapper boardMapper;
+    private final com.devboard.service.github.BoardGithubService githubService;
 
     /** Quadro padrão criado junto com o projeto (spec-board-kanban.md, 5.1). Sem verificação de permissão: a chamada já vem de dentro da criação do projeto. */
     @Transactional
@@ -78,9 +79,12 @@ public class BoardService {
     public BoardResponse createBoard(Long projectId, CreateBoardRequest request, Long userId) {
         permissionService.requireRole(projectId, userId, ProjectRole.ADMIN);
 
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findLockedById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Projeto não encontrado"));
 
+        if (boardRepository.existsByProjectIdAndName(projectId, request.getName())) {
+            throw new ConflictException("Já existe um quadro com esse nome no projeto");
+        }
         Board board = new Board();
         board.setProject(project);
         board.setName(request.getName());
@@ -115,44 +119,52 @@ public class BoardService {
         Map<Long, Long> commentCounts = loadCommentCounts(tasksByColumn);
 
         return boards.stream()
-                .map(board -> boardMapper.toResponse(board, columnsByBoard.get(board.getId()), tasksByColumn, commentCounts))
+                .map(board -> {
+                    BoardResponse response = boardMapper.toResponse(board, columnsByBoard.get(board.getId()), tasksByColumn, commentCounts);
+                    response.getColumns().forEach(c -> c.setTasks(List.of()));
+                    return response;
+                })
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public BoardResponse getBoardView(Long boardId, Long userId) {
-        return getBoardView(boardId, userId, null, null, null, null);
+        return getBoardView(boardId, userId, null, null, null, null, null);
     }
 
     /**
      * Leitura mais frequente do sistema — uma única consulta com JOIN FETCH, nunca uma por coluna
      * ou tarefa (claude.md). Filtros (spec-board-kanban.md 4.3) se aplicam às tarefas, nunca às
-     * colunas — uma coluna sem tarefas correspondentes aparece vazia, não some. Filtro por label
-     * fica pendente até o módulo de labels existir (spec-labels-search.md).
+     * colunas — uma coluna sem tarefas correspondentes aparece vazia, não some.
      */
     @Transactional(readOnly = true)
-    public BoardResponse getBoardView(Long boardId, Long userId, Long assigneeId, TaskPriority priority,
+    public BoardResponse getBoardView(Long boardId, Long userId, Long assigneeId, String label, TaskPriority priority,
                                        TaskType type, String search) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.VIEWER);
 
         List<BoardColumn> columns = boardColumnRepository.findByBoardIdOrderByPositionAsc(boardId);
         List<Long> columnIds = columns.stream().map(BoardColumn::getId).toList();
-        Map<Long, List<Task>> tasksByColumn = filterTasks(loadTasksByColumn(columnIds), assigneeId, priority, type, search);
+        Map<Long, List<Task>> tasksByColumn = filterTasks(loadTasksByColumn(columnIds), assigneeId, label, priority, type, search);
         Map<Long, Long> commentCounts = loadCommentCounts(tasksByColumn);
 
         return boardMapper.toResponse(board, columns, tasksByColumn, commentCounts);
     }
 
-    private Map<Long, List<Task>> filterTasks(Map<Long, List<Task>> tasksByColumn, Long assigneeId,
+    private Map<Long, List<Task>> filterTasks(Map<Long, List<Task>> tasksByColumn, Long assigneeId, String label,
                                                TaskPriority priority, TaskType type, String search) {
-        if (assigneeId == null && priority == null && type == null && (search == null || search.isBlank())) {
+        if (assigneeId == null && (label == null || label.isBlank()) && priority == null && type == null
+                && (search == null || search.isBlank())) {
             return tasksByColumn;
         }
+        String normalizedLabel = label != null && !label.isBlank() ? label.trim().toLowerCase() : null;
         String normalizedSearch = search != null && !search.isBlank() ? search.trim().toLowerCase() : null;
 
         Map<Long, List<Task>> filtered = new HashMap<>();
         tasksByColumn.forEach((columnId, tasks) -> filtered.put(columnId, tasks.stream()
                 .filter(task -> assigneeId == null || (task.getAssignee() != null && task.getAssignee().getId().equals(assigneeId)))
+                .filter(task -> normalizedLabel == null || task.getLabels().stream()
+                        .anyMatch(taskLabel -> taskLabel.getName().toLowerCase().equals(normalizedLabel)))
                 .filter(task -> priority == null || task.getPriority() == priority)
                 .filter(task -> type == null || task.getType() == type)
                 .filter(task -> normalizedSearch == null || task.getTitle().toLowerCase().contains(normalizedSearch))
@@ -182,12 +194,16 @@ public class BoardService {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
 
+        projectRepository.findLockedById(board.getProject().getId());
+        if (boardRepository.existsByProjectIdAndNameAndIdNot(board.getProject().getId(), request.getName(), boardId))
+            throw new ConflictException("Já existe um quadro com esse nome no projeto");
         board.setName(request.getName());
         board.setDescription(request.getDescription());
 
         if (request.isDefaultBoard() && !Boolean.TRUE.equals(board.getIsDefault())) {
             boardRepository.findByProjectIdAndIsDefaultTrue(board.getProject().getId())
                     .ifPresent(previous -> previous.setIsDefault(false));
+            boardRepository.flush();
             board.setIsDefault(true);
         }
 
@@ -200,10 +216,20 @@ public class BoardService {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
 
+        projectRepository.findLockedById(board.getProject().getId());
         if (boardRepository.countByProjectId(board.getProject().getId()) <= 1) {
             throw new ConflictException("Não é possível excluir o único quadro do projeto");
         }
 
+        if (taskRepository.existsByColumnBoardId(boardId)) {
+            throw new ConflictException("Quadro possui tarefas; mova ou arquive as tarefas antes de excluir");
+        }
+        Board replacement = boardRepository.findByProjectIdOrderByCreatedAtAsc(board.getProject().getId()).stream()
+                .filter(b -> !b.getId().equals(boardId)).findFirst().orElseThrow();
+        githubService.removeBoardHook(boardId);
+        if (Boolean.TRUE.equals(board.getIsDefault())) {
+            board.setIsDefault(false); boardRepository.flush(); replacement.setIsDefault(true);
+        }
         boardColumnRepository.deleteAll(boardColumnRepository.findByBoardIdOrderByPositionAsc(boardId));
         boardRepository.delete(board);
 

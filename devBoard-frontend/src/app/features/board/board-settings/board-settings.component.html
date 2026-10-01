@@ -1,0 +1,61 @@
+<main class="page"><div class="page-container">
+  <p class="alert alert-error" role="alert" *ngIf="error">{{ error }}</p>
+  <p class="alert" role="status" *ngIf="message">{{ message }}</p>
+  <ng-container *ngIf="board; else loading">
+    <a [routerLink]="['/boards', board.id]">← Voltar ao board</a>
+    <h1>{{ board.name }} <span class="pill" *ngIf="board.defaultBoard">Padrão</span></h1>
+    <p>Organize este board e configure seu repositório GitHub.</p>
+    <section class="card"><h2>Dados do board</h2>
+      <form [formGroup]="details" (ngSubmit)="saveBoard()">
+        <fieldset [disabled]="!canManage || busy">
+          <label for="name">Nome</label><input id="name" formControlName="name" maxlength="100">
+          <label for="description">Descrição</label><textarea id="description" formControlName="description"></textarea>
+          <label class="check"><input type="checkbox" formControlName="defaultBoard"> Usar como board padrão</label>
+          <p>Renomear o board não altera seu indicador de padrão. Para trocar o padrão, selecione outro board.</p>
+          <button class="btn-primary" [disabled]="details.invalid">Salvar board</button>
+        </fieldset>
+      </form>
+    </section>
+    <section class="card"><h2>Repositório GitHub</h2>
+      <ng-container *ngIf="board.githubRepoId; else noRepository">
+        <a [href]="board.githubRepoUrl" target="_blank" rel="noopener noreferrer">{{ board.githubRepoOwner }}/{{ board.githubRepoName }}</a>
+        <p>Última sincronização: {{ board.lastSyncAt ? (board.lastSyncAt | date:'short') : 'Aguardando primeira sincronização' }}</p>
+        <p role="alert" *ngIf="board.githubReauthRequired">Reconecte sua conta GitHub para continuar a sincronização.</p>
+        <button *ngIf="canSync" class="btn-secondary" [disabled]="busy" (click)="sync()">Sincronizar agora</button>
+        <button *ngIf="canManage" class="btn-danger" [disabled]="busy" (click)="unlink()">Desvincular</button>
+      </ng-container>
+      <ng-template #noRepository><p>Este board funciona como Kanban sem repositório.</p>
+        <ng-container *ngIf="canManage">
+          <form [formGroup]="searchForm" (ngSubmit)="searchRepositories()"><label for="search">Buscar repositórios</label><input id="search" formControlName="search"><button class="btn-secondary" [disabled]="busy">Carregar repositórios</button></form>
+          <form [formGroup]="linkForm" (ngSubmit)="link()">
+            <label for="repo">Repositório com acesso de escrita</label><select id="repo" formControlName="repositoryId"><option [ngValue]="null">Selecione</option><option *ngFor="let repo of repositories" [ngValue]="repo.id" [disabled]="repo.linked">{{ repo.fullName }}{{ repo.linked ? ' — já vinculado' : '' }}</option></select>
+            <label for="base">Branch base (opcional)</label><input id="base" formControlName="defaultBaseBranch" placeholder="Padrão do repositório">
+            <label for="watched">Branches monitoradas, separadas por vírgula</label><input id="watched" formControlName="watchedBranches" placeholder="Vazio para monitorar todas">
+            <button class="btn-primary" [disabled]="busy || linkForm.invalid">Vincular repositório</button>
+          </form>
+        </ng-container>
+      </ng-template>
+    </section>
+    <section class="card" *ngIf="board.githubRepoId && canManage"><h2>Automações deste board</h2>
+      <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()"><fieldset [disabled]="busy">
+        <label class="check"><input type="checkbox" formControlName="moveOnCommit"> Mover ao receber commit</label>
+        <label class="check"><input type="checkbox" formControlName="moveOnPrOpen"> Mover ao abrir PR</label>
+        <label class="check"><input type="checkbox" formControlName="moveOnPrMerge"> Mover ao integrar PR</label>
+        <label class="check"><input type="checkbox" formControlName="importIssues"> Importar novas issues</label>
+        <label class="check"><input type="checkbox" formControlName="closeIssueOnDone"> Fechar ou reabrir issue conforme a tarefa</label>
+        <label for="pattern">Padrão de nome da branch</label><input id="pattern" formControlName="branchPattern"><p>Use {{ '{id}' }} para o número e {{ '{title}' }} para o título.</p>
+        <label for="settings-base">Branch base</label><input id="settings-base" formControlName="defaultBaseBranch">
+        <label for="settings-watched">Branches monitoradas</label><input id="settings-watched" formControlName="watchedBranches">
+        <button class="btn-primary" [disabled]="settingsForm.invalid">Salvar automações</button>
+      </fieldset></form>
+    </section>
+    <section class="card" *ngIf="board.githubRepoId && canManage"><h2>Importar colaboradores</h2><p>Os colaboradores deste repositório serão membros do projeto inteiro.</p>
+      <form [formGroup]="membersForm" (ngSubmit)="importMembers()">
+        <label for="role">Papel concedido</label><select id="role" formControlName="role"><option value="DEVELOPER">Desenvolvedor</option><option value="VIEWER">Visualizador</option><option value="ADMIN">Administrador</option></select>
+        <label for="logins">Logins, separados por vírgula (opcional)</label><input id="logins" formControlName="logins" placeholder="Vazio para importar todos">
+        <button class="btn-primary" [disabled]="busy">Importar colaboradores</button>
+      </form>
+    </section>
+    <section class="card" *ngIf="canManage"><h2>Excluir board</h2><p>O último board do projeto não pode ser excluído.</p><button class="btn-danger" [disabled]="busy" (click)="deleteBoard()">Excluir board</button></section>
+  </ng-container><ng-template #loading><p *ngIf="!error">Carregando configurações…</p></ng-template>
+</div></main>

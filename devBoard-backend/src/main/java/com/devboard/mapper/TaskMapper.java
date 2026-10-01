@@ -21,6 +21,10 @@ public class TaskMapper {
     public TaskResponse toResponse(Task task, List<TaskComment> comments, List<TaskActivity> activities) {
         return TaskResponse.builder()
                 .id(task.getId())
+                .githubIssueId(task.getGithubIssueId()).githubIssueUrl(task.getGithubIssueUrl())
+                .githubPrId(task.getGithubPrId()).githubPrUrl(task.getGithubPrUrl())
+                .githubPrState(task.getGithubPrState() == null ? null : task.getGithubPrState().name())
+                .branch(task.getBranch()).labels(task.getLabels().stream().map(LabelMapper::response).toList())
                 .projectId(task.resolveProjectId())
                 .boardId(task.getColumn().getBoard().getId())
                 .columnId(task.getColumn().getId())
@@ -48,6 +52,10 @@ public class TaskMapper {
     public TaskSummaryResponse toSummary(Task task, long commentCount) {
         return TaskSummaryResponse.builder()
                 .id(task.getId())
+                .githubIssueId(task.getGithubIssueId()).githubIssueUrl(task.getGithubIssueUrl())
+                .githubPrId(task.getGithubPrId()).githubPrUrl(task.getGithubPrUrl())
+                .githubPrState(task.getGithubPrState() == null ? null : task.getGithubPrState().name())
+                .branch(task.getBranch()).labels(task.getLabels().stream().map(LabelMapper::response).toList())
                 .title(task.getTitle())
                 .type(task.getType().name())
                 .priority(task.getPriority().name())

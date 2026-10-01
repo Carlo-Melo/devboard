@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { BoardService } from '../../../core/services/board.service';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProjectDetailComponent } from './project-detail.component';
@@ -18,11 +19,9 @@ describe('ProjectDetailComponent', () => {
       owner,
       currentUserRole: 'ADMIN',
       currentUserOwner: true,
-      watchedBranches: [],
-      defaultBaseBranch: 'main',
       archived: false,
       members: [],
-      boards: [{ id: 1, name: 'Main Board', defaultBoard: true }],
+      boards: [{ id: 1, name: 'Main Board', defaultBoard: true, githubLinked: false }],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       ...overrides
@@ -35,6 +34,7 @@ describe('ProjectDetailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent],
       providers: [
+        { provide: BoardService, useValue: jasmine.createSpyObj('BoardService', ['create']) },
         { provide: ProjectService, useValue: projectServiceSpy },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
         provideRouter([])

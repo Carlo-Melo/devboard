@@ -93,6 +93,19 @@ public class Task {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    private Long githubIssueId;
+    private Integer githubIssueNumber;
+    private String githubIssueUrl;
+    private Long githubPrId;
+    private String githubPrUrl;
+    @Enumerated(EnumType.STRING)
+    private com.devboard.entity.enums.PullRequestState githubPrState;
+    private String branch;
+    private boolean githubManuallyEdited;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "task_labels", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "label_id"))
+    private Set<Label> labels = new HashSet<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

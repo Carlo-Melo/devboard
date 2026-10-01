@@ -68,6 +68,8 @@ class ProjectServiceTest {
     @Mock
     private BoardService boardService;
 
+    @Mock private LabelService labelService;
+    @Mock private com.devboard.service.github.BoardGithubService githubService;
     @InjectMocks
     private ProjectService projectService;
 
@@ -81,7 +83,7 @@ class ProjectServiceTest {
 
         lenient().when(projectMapper.toResponse(any(Project.class), any(ProjectRole.class), anyBoolean(), anyList(), anyList()))
                 .thenReturn(ProjectResponse.builder().id(10L).name("Projeto X").build());
-        lenient().when(projectMapper.toSummary(any(Project.class), anyLong()))
+        lenient().when(projectMapper.toSummary(any(Project.class), anyLong(), anyLong(), anyLong()))
                 .thenReturn(ProjectSummaryResponse.builder().id(10L).name("Projeto X").build());
     }
 
@@ -107,17 +109,9 @@ class ProjectServiceTest {
     }
 
     @Test
-    void create_deveLancarAccessDenied_quandoRepositorioInformadoSemGithubConectado() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-
-        CreateProjectRequest request = new CreateProjectRequest();
-        request.setName("Projeto X");
-        request.setGithubRepoId(999L);
-
-        assertThatThrownBy(() -> projectService.create(request, 1L))
-                .isInstanceOf(AccessDeniedException.class);
-
-        verify(projectRepository, never()).save(any(Project.class));
+    void projeto_naoDeveExporCamposDeRepositorio() {
+        assertThat(java.util.Arrays.stream(Project.class.getDeclaredFields()).map(java.lang.reflect.Field::getName))
+                .doesNotContain("githubRepoId", "watchedBranches", "defaultBaseBranch", "lastSyncAt");
     }
 
     @Test

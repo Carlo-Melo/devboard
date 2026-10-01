@@ -46,7 +46,7 @@ class JwtAuthenticationIntegrationTest {
     void me_deveRetornar200_quandoTokenValido() throws Exception {
         String suffix = String.valueOf(System.currentTimeMillis());
         Map<String, String> registerRequest = Map.of(
-                "username", "itest_" + suffix,
+                "username", "itest-" + suffix,
                 "email", "itest_" + suffix + "@example.com",
                 "password", "SecurePass123",
                 "confirmPassword", "SecurePass123"

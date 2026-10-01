@@ -47,6 +47,7 @@ public class MemberService {
 
     private static final int INVITE_EXPIRATION_DAYS = 7;
 
+    private final com.devboard.repository.BoardRepository boardRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInviteRepository projectInviteRepository;
@@ -190,12 +191,15 @@ public class MemberService {
     }
 
     @Transactional
-    public GithubImportResponse importGithubCollaborators(Long projectId, ProjectRole role, List<String> requestedLogins,
+    public GithubImportResponse importGithubCollaborators(Long boardId, ProjectRole role, List<String> requestedLogins,
                                                             Long userId) {
+        com.devboard.entity.Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quadro não encontrado"));
+        Long projectId = board.getProject().getId();
         permissionService.requireRole(projectId, userId, ProjectRole.ADMIN);
-        Project project = findProject(projectId);
-        if (!project.hasGithubRepo()) {
-            throw new InvalidRequestException("Projeto não possui repositório GitHub vinculado");
+        Project project = board.getProject();
+        if (!board.hasGithubRepo()) {
+            throw new InvalidRequestException("Quadro não possui repositório GitHub vinculado");
         }
         User inviter = findUser(userId);
         if (inviter.getGithubToken() == null) {
@@ -210,7 +214,7 @@ public class MemberService {
         int invited = 0;
         int ignored = 0;
         for (GithubClient.GithubCollaborator collaborator : githubClient.fetchCollaborators(
-                inviter.getGithubToken(), project.getGithubRepoOwner(), project.getGithubRepoName())) {
+                inviter.getGithubToken(), board.getGithubRepoOwner(), board.getGithubRepoName())) {
             if (!selected.test(collaborator)) {
                 continue;
             }
