@@ -15,7 +15,7 @@ public class ProjectSummaryResponse {
     private String description;
     private UserResponse owner;
     private long memberCount;
-    private boolean githubLinked;
-    private LocalDateTime lastSyncAt;
+    private long boardCount;
+    private long githubBoardCount;
     private LocalDateTime updatedAt;
 }

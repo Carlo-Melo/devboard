@@ -35,6 +35,7 @@ describe('TaskDetailComponent', () => {
       updatedAt: new Date().toISOString(),
       comments: [],
       activities: [],
+      labels: [],
       ...overrides
     };
   }

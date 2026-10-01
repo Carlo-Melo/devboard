@@ -11,7 +11,7 @@
 
 A tarefa é a unidade de trabalho do devBoard. Diferente de ferramentas puramente voltadas a código, a tarefa aqui é **genérica por design**: comporta tanto "implementar endpoint de login" quanto "validar manualmente as telas de cadastro" ou "escrever a documentação de deploy".
 
-O tipo da tarefa é o que carrega essa distinção, e é ele que determina se recursos ligados ao GitHub — criar branch, vincular PR — fazem sentido para aquele item.
+O tipo da tarefa é o que carrega essa distinção, e é ele que determina se recursos ligados ao GitHub — criar branch, vincular issue ou PR — fazem sentido para aquele item. Esses recursos só estão disponíveis quando o **board da tarefa** possui um repositório GitHub vinculado; um projeto pode ter outros boards sem repositório ou vinculados a repositórios diferentes.
 
 ---
 
@@ -43,7 +43,7 @@ O tipo da tarefa é o que carrega essa distinção, e é ele que determina se re
 | Campo | Tipo | Regra |
 |---|---|---|
 | id | identificador | gerado pelo sistema; é o número exibido como `#id` |
-| coluna | referência | obrigatório; determina o projeto e o quadro |
+| coluna | referência | obrigatório; determina o board e, por consequência, o projeto |
 | título | texto | obrigatório, 3–255 caracteres |
 | descrição | texto longo | opcional; aceita Markdown |
 | posição | numérico | ordem dentro da coluna, sequencial a partir de 0 |
@@ -55,9 +55,9 @@ O tipo da tarefa é o que carrega essa distinção, e é ele que determina se re
 | labels | lista | referências a labels do projeto |
 | prazo | data | opcional |
 | estimativa | numérico | opcional; pontos de história |
-| github issue id / url | numérico / URL | opcional |
-| github pr id / url / estado | numérico / URL / enum | opcional; estado: `OPEN` \| `MERGED` \| `CLOSED` |
-| branch | texto | opcional; nome da branch criada ou vinculada |
+| github issue id / url | numérico / URL | opcional; sempre pertencente ao repositório vinculado ao board |
+| github pr id / url / estado | numérico / URL / enum | opcional; sempre pertencente ao repositório vinculado ao board; estado: `OPEN` \| `MERGED` \| `CLOSED` |
+| branch | texto | opcional; nome da branch criada ou vinculada no repositório do board |
 | arquivada | booleano | default falso |
 | concluída em | timestamp | preenchido ao entrar em coluna de papel `DONE` |
 | criada em / atualizada em | timestamp | automático |
@@ -74,6 +74,8 @@ O tipo da tarefa é o que carrega essa distinção, e é ele que determina se re
 | `OTHER` | qualquer outra atividade | issue |
 
 **Regra**: a ação de criar branch só é oferecida para tipos que a suportam. Para os demais, a operação é rejeitada com erro explicativo.
+
+**Regra de escopo GitHub**: uma tarefa não pode ser vinculada a issue, PR ou branch de repositório diferente daquele associado ao seu board. Tarefas em board sem repositório podem existir normalmente, mas não oferecem ações GitHub.
 
 ### 3.3 Comentário
 
@@ -111,7 +113,7 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 
 ### 4.1 Criar tarefa — `POST /api/tasks`
 
-**Entrada**: id da coluna, título, descrição, tipo, prioridade, responsável, co-responsáveis, labels, prazo, estimativa, github issue id — apenas coluna e título são obrigatórios
+**Entrada**: id da coluna, título, descrição, tipo, prioridade, responsável, co-responsáveis, labels, prazo, estimativa, github issue id — apenas coluna e título são obrigatórios. `github issue id`, quando informado, deve pertencer ao repositório vinculado ao board da coluna.
 
 **Comportamento**
 1. Valida que responsável e co-responsáveis são membros do projeto.
@@ -127,6 +129,8 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 | Título ausente ou fora do tamanho | 400 |
 | Responsável não é membro do projeto | 400 |
 | Label não pertence ao projeto | 400 |
+| Issue não pertence ao repositório do board | 400 |
+| Board sem repositório e issue informada | 400 |
 | Coluna inexistente | 404 |
 | Sem permissão para criar | 403 |
 
@@ -163,7 +167,7 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 | Situação | Status |
 |---|---|
 | Posição inválida | 400 |
-| Coluna de destino em outro projeto | 400 |
+| Coluna de destino em outro board | 400 |
 | Limite WIP atingido | 409 |
 | Coluna inexistente | 404 |
 
@@ -196,10 +200,10 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 
 ### 4.8 Criar branch — `POST /api/tasks/{taskId}/branch`
 
-**Entrada**: branch base (opcional — default: branch base do projeto), nome customizado (opcional)
+**Entrada**: branch base (opcional — default: branch base do board), nome customizado (opcional)
 
 **Comportamento**
-1. Valida que o projeto tem repositório vinculado e que o tipo da tarefa suporta branch.
+1. Valida que o board da tarefa tem repositório vinculado e que o tipo da tarefa suporta branch.
 2. Gera o nome no padrão `feature/task-{id}-{titulo-normalizado}`, com o título convertido para minúsculas, sem acentos, com hífens no lugar de espaços e truncado em 50 caracteres.
 3. Cria a branch no GitHub a partir da base indicada.
 4. Persiste o nome na tarefa e registra atividade.
@@ -207,7 +211,7 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 **Erros**
 | Situação | Status |
 |---|---|
-| Projeto sem repositório vinculado | 400 |
+| Board sem repositório vinculado | 400 |
 | Tipo de tarefa não suporta branch | 400 |
 | Tarefa já possui branch | 409 |
 | Branch já existe no repositório | 409 |
@@ -218,16 +222,18 @@ Todos exigem autenticação e vínculo com o projeto da tarefa.
 
 ### 4.9 Vínculo com GitHub
 
-- `POST /api/tasks/{taskId}/github-issue` — vincula uma issue existente; importa título, descrição e labels se a tarefa ainda não os tiver
+- `POST /api/tasks/{taskId}/github-issue` — vincula uma issue existente **do repositório do board**; importa título, descrição e labels se a tarefa ainda não os tiver
 - `DELETE /api/tasks/{taskId}/github-issue` — desfaz o vínculo; a issue permanece no GitHub
-- `POST /api/tasks/{taskId}/github-issue/create` — cria uma issue nova no GitHub a partir da tarefa e já a vincula
+- `POST /api/tasks/{taskId}/github-issue/create` — cria uma issue nova no repositório do board a partir da tarefa e já a vincula
+
+Todos os endpoints desta seção retornam `400` se o board da tarefa não tiver repositório vinculado ou se a issue informada pertencer a outro repositório.
 
 ---
 
 ## 5. FLUXOS
 
 ### 5.1 Tarefa de desenvolvimento, do início ao fim
-1. Membro cria a tarefa do tipo `DEV` no `Backlog`, define prioridade e responsável.
+1. Membro cria a tarefa do tipo `DEV` no `Backlog` de um board vinculado ao repositório de desenvolvimento, define prioridade e responsável.
 2. Responsável move a tarefa para `To-Do` e depois aciona "criar branch".
 3. Sistema cria a branch no GitHub seguindo o padrão de nomenclatura e registra a atividade.
 4. Desenvolvedor faz checkout e commita. Os webhooks movem a tarefa para `In Progress` automaticamente.
@@ -281,7 +287,8 @@ Este fluxo é deliberadamente idêntico ao anterior do ponto de vista do quadro 
 - [ ] Cada campo editado gera uma atividade própria e identificável
 - [ ] Criar branch gera nome no padrão definido, sem acentos e truncado
 - [ ] Criar branch em tarefa de tipo não suportado é rejeitado com mensagem clara
-- [ ] Criar branch em projeto sem GitHub vinculado é rejeitado
+- [ ] Criar branch em board sem GitHub vinculado é rejeitado
+- [ ] Não é possível vincular uma issue ou PR de repositório diferente do repositório do board
 - [ ] Segunda tentativa de criar branch na mesma tarefa é rejeitada
 - [ ] Menção a membro gera notificação; menção a não membro fica como texto
 - [ ] Autor de uma ação nunca é notificado da própria ação

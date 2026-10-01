@@ -9,6 +9,7 @@ import com.devboard.dto.board.UpdateBoardRequest;
 import com.devboard.dto.board.UpdateColumnRequest;
 import com.devboard.entity.Board;
 import com.devboard.entity.BoardColumn;
+import com.devboard.entity.Label;
 import com.devboard.entity.Project;
 import com.devboard.entity.Task;
 import com.devboard.entity.User;
@@ -71,6 +72,8 @@ class BoardServiceTest {
 
     @Mock
     private BoardMapper boardMapper;
+
+    @Mock private com.devboard.service.github.BoardGithubService githubService;
 
     @InjectMocks
     private BoardService boardService;
@@ -139,7 +142,7 @@ class BoardServiceTest {
 
     @Test
     void createBoard_deveCriarComColunasPadrao_quandoNenhumaColunaInformada() {
-        when(projectRepository.findById(20L)).thenReturn(Optional.of(project));
+        when(projectRepository.findLockedById(20L)).thenReturn(Optional.of(project));
         when(boardRepository.save(any(Board.class))).thenReturn(board(101L));
 
         CreateBoardRequest request = new CreateBoardRequest();
@@ -155,7 +158,7 @@ class BoardServiceTest {
 
     @Test
     void createBoard_deveLancarConflict_quandoColunasCustomizadasTemNomeDuplicado() {
-        when(projectRepository.findById(20L)).thenReturn(Optional.of(project));
+        when(projectRepository.findLockedById(20L)).thenReturn(Optional.of(project));
         when(boardRepository.save(any(Board.class))).thenReturn(board(101L));
 
         CreateBoardRequest request = new CreateBoardRequest();
@@ -168,7 +171,7 @@ class BoardServiceTest {
 
     @Test
     void createBoard_deveLancarConflict_quandoColunasCustomizadasTemPapelDuplicado() {
-        when(projectRepository.findById(20L)).thenReturn(Optional.of(project));
+        when(projectRepository.findLockedById(20L)).thenReturn(Optional.of(project));
         when(boardRepository.save(any(Board.class))).thenReturn(board(101L));
 
         CreateBoardRequest request = new CreateBoardRequest();
@@ -215,6 +218,35 @@ class BoardServiceTest {
         assertThat(tasksByColumn.get(1L)).containsExactly(taskInBacklog);
         assertThat(tasksByColumn.get(2L)).isNull();
         verify(taskRepository).findByColumnIdInAndArchivedFalseOrderByPosition(List.of(1L, 2L));
+    }
+
+    @Test
+    void getBoardView_deveFiltrarLabelSemRemoverColunasVazias() {
+        Board board = board(101L);
+        BoardColumn backlog = column(1L, board, "Backlog", 0, ColumnRole.BACKLOG);
+        BoardColumn todo = column(2L, board, "To-Do", 1, ColumnRole.TODO);
+        Task matching = new Task();
+        matching.setId(500L);
+        matching.setColumn(backlog);
+        Label bug = new Label();
+        bug.setName("Bug");
+        matching.getLabels().add(bug);
+        Task other = new Task();
+        other.setId(501L);
+        other.setColumn(todo);
+
+        when(boardRepository.findById(101L)).thenReturn(Optional.of(board));
+        when(boardColumnRepository.findByBoardIdOrderByPositionAsc(101L)).thenReturn(List.of(backlog, todo));
+        when(taskRepository.findByColumnIdInAndArchivedFalseOrderByPosition(List.of(1L, 2L)))
+                .thenReturn(List.of(matching, other));
+
+        ArgumentCaptor<Map> tasksByColumnCaptor = ArgumentCaptor.forClass(Map.class);
+        boardService.getBoardView(101L, 1L, null, "bug", null, null, null);
+
+        verify(boardMapper).toResponse(any(Board.class), anyList(), tasksByColumnCaptor.capture(), anyMap());
+        Map<Long, List<Task>> tasksByColumn = tasksByColumnCaptor.getValue();
+        assertThat(tasksByColumn.get(1L)).containsExactly(matching);
+        assertThat(tasksByColumn.get(2L)).isEmpty();
     }
 
     @Test
@@ -265,6 +297,8 @@ class BoardServiceTest {
         Board target = board(101L);
         when(boardRepository.findById(101L)).thenReturn(Optional.of(target));
         when(boardRepository.countByProjectId(20L)).thenReturn(2L);
+        when(boardRepository.findByProjectIdOrderByCreatedAtAsc(20L)).thenReturn(List.of(target, board(102L)));
+        when(taskRepository.existsByColumnBoardId(101L)).thenReturn(false);
         when(boardColumnRepository.findByBoardIdOrderByPositionAsc(101L)).thenReturn(List.of());
 
         boardService.deleteBoard(101L, 1L);

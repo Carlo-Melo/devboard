@@ -4,6 +4,9 @@
 **/.angular/
 **/coverage/
 **/target/
+**/target-board-domain/
+output/board-domain-test-db/
+/tmp/
 
 # Local configuration and secrets
 **/.env

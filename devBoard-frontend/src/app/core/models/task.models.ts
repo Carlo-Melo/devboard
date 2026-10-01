@@ -4,6 +4,14 @@ export type TaskType = 'DEV' | 'QA' | 'DESIGN' | 'DOCUMENTATION' | 'OPERATIONAL'
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export type TaskActivityType =
+  | 'GITHUB_ISSUE_LINKED'
+  | 'BRANCH_CREATED'
+  | 'COMMIT_RECEIVED'
+  | 'PR_OPENED'
+  | 'PR_MERGED'
+  | 'PR_CLOSED'
+  | 'LABELS_CHANGED'
+  | 'WIP_EXCEEDED'
   | 'CREATED'
   | 'TITLE_CHANGED'
   | 'DESCRIPTION_CHANGED'
@@ -27,6 +35,26 @@ export interface CreateTaskRequest {
   collaboratorIds?: number[];
   dueDate?: string;
   estimate?: number;
+  githubIssueId?: number;
+  labelIds?: number[];
+}
+
+export interface LabelResponse {
+  id: number;
+  projectId: number;
+  name: string;
+  color: string;
+  description?: string;
+}
+
+export interface GithubTaskFields {
+  githubIssueId?: number;
+  githubIssueUrl?: string;
+  githubPrId?: number;
+  githubPrUrl?: string;
+  githubPrState?: 'OPEN' | 'MERGED' | 'CLOSED';
+  branch?: string;
+  labels: LabelResponse[];
 }
 
 export interface UpdateTaskRequest {
@@ -45,7 +73,7 @@ export interface MoveTaskRequest {
   position: number;
 }
 
-export interface TaskSummaryResponse {
+export interface TaskSummaryResponse extends GithubTaskFields {
   id: number;
   title: string;
   type: TaskType;
@@ -85,7 +113,7 @@ export interface ActivityResponse {
   createdAt: string;
 }
 
-export interface TaskResponse {
+export interface TaskResponse extends GithubTaskFields {
   id: number;
   projectId: number;
   boardId: number;

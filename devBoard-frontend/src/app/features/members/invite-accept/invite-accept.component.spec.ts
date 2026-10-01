@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { InviteAcceptComponent } from './invite-accept.component';
 import { MemberService } from '../../../core/services/member.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -64,5 +64,18 @@ describe('InviteAcceptComponent', () => {
 
     expect(memberService.acceptInvite).toHaveBeenCalledWith('token-123');
     expect(navigate).toHaveBeenCalledWith('/projects/7');
+  });
+
+  it('shows the API conflict when the current user already belongs to the project', () => {
+    authService.isAuthenticated.and.returnValue(true);
+    memberService.acceptInvite.and.returnValue(throwError(() => ({ message: 'Usuário já é membro do projeto' })));
+    const fixture = TestBed.createComponent(InviteAcceptComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.accept();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.alert-error').textContent)
+      .toContain('Usuário já é membro do projeto');
   });
 });

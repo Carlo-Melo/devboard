@@ -10,8 +10,6 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
   name: string;
   description?: string;
-  watchedBranches?: string[];
-  defaultBaseBranch?: string;
 }
 
 export interface ProjectSummaryResponse {
@@ -20,8 +18,8 @@ export interface ProjectSummaryResponse {
   description?: string;
   owner: UserResponse;
   memberCount: number;
-  githubLinked: boolean;
-  lastSyncAt?: string;
+  boardCount: number;
+  githubBoardCount: number;
   updatedAt: string;
 }
 
@@ -38,6 +36,7 @@ export interface BoardSummaryResponse {
   id: number;
   name: string;
   defaultBoard: boolean;
+  githubLinked: boolean;
 }
 
 export interface ProjectResponse {
@@ -47,14 +46,7 @@ export interface ProjectResponse {
   owner: UserResponse;
   currentUserRole: ProjectRole;
   currentUserOwner: boolean;
-  githubRepoId?: number;
-  githubRepoOwner?: string;
-  githubRepoName?: string;
-  githubRepoUrl?: string;
-  watchedBranches: string[];
-  defaultBaseBranch: string;
   archived: boolean;
-  lastSyncAt?: string;
   members: ProjectMemberResponse[];
   boards: BoardSummaryResponse[];
   createdAt: string;

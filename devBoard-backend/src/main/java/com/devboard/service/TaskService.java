@@ -52,6 +52,8 @@ public class TaskService {
     private final PermissionService permissionService;
     private final TaskMapper taskMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.devboard.service.github.TaskGithubService githubService;
+    private final LabelService labelService;
 
     @Transactional
     public TaskResponse create(CreateTaskRequest request, Long userId) {
@@ -82,7 +84,9 @@ public class TaskService {
         task.setEstimate(request.getEstimate());
         task.setPosition((int) taskRepository.countByColumnIdAndArchivedFalse(column.getId()));
 
+        if (request.getGithubIssueId() != null) githubService.attachIssue(task, request.getGithubIssueId(), userId);
         Task saved = taskRepository.save(task);
+        if (request.getLabelIds() != null) labelService.apply(saved.getId(), request.getLabelIds(), userId);
 
         eventPublisher.publishEvent(new TaskActivityEvent(saved, userId, TaskActivityType.CREATED, "Tarefa criada"));
 
@@ -103,6 +107,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireTaskEditable(task, userId);
         Long projectId = task.resolveProjectId();
+        task.setGithubManuallyEdited(true);
 
         if (!task.getTitle().equals(request.getTitle())) {
             publishActivity(task, userId, TaskActivityType.TITLE_CHANGED,
@@ -177,8 +182,8 @@ public class TaskService {
         }
 
         BoardColumn target = findColumnOrThrow(request.getColumnId());
-        if (!target.getBoard().getProject().getId().equals(projectId)) {
-            throw new InvalidRequestException("Coluna pertence a outro projeto");
+        if (!target.getBoard().getId().equals(task.getColumn().getBoard().getId())) {
+            throw new InvalidRequestException("Coluna pertence a outro quadro");
         }
 
         BoardColumn origin = task.getColumn();
@@ -218,6 +223,7 @@ public class TaskService {
         eventPublisher.publishEvent(new TaskActivityEvent(task, userId, TaskActivityType.MOVED,
                 "Movida de \"%s\" para \"%s\"".formatted(origin.getName(), target.getName()), metadata));
 
+        if (wasDone != isDone) githubService.queueIssueState(taskId, isDone, userId);
         log.info("Tarefa movida: id={}, fromColumnId={}, toColumnId={}, userId={}", taskId, origin.getId(), target.getId(), userId);
         return taskMapper.toResponse(task, loadComments(taskId), loadActivities(taskId));
     }

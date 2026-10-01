@@ -46,11 +46,12 @@ public class BoardController {
     @GetMapping("/api/boards/{boardId}")
     public ResponseEntity<BoardResponse> getById(@PathVariable Long boardId,
                                                   @RequestParam(required = false) Long assigneeId,
+                                                  @RequestParam(required = false) String label,
                                                   @RequestParam(required = false) TaskPriority priority,
                                                   @RequestParam(required = false) TaskType type,
                                                   @RequestParam(required = false) String search,
                                                   @AuthenticationPrincipal SecurityUser user) {
-        return ResponseEntity.ok(boardService.getBoardView(boardId, user.getId(), assigneeId, priority, type, search));
+        return ResponseEntity.ok(boardService.getBoardView(boardId, user.getId(), assigneeId, label, priority, type, search));
     }
 
     @PutMapping("/api/boards/{boardId}")

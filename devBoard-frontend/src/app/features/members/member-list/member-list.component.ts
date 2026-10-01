@@ -2,9 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { MemberService } from '../../../core/services/member.service';
 import { ProjectService } from '../../../core/services/project.service';
-import { ProjectResponse, ProjectRole } from '../../../core/models/project.models';
+import { ProjectMemberResponse, ProjectResponse, ProjectRole } from '../../../core/models/project.models';
 import { GithubImportResponse, InviteResponse } from '../../../core/models/member.models';
 import { ApiError } from '../../../core/models/api-error.model';
 
@@ -18,12 +19,21 @@ import { ApiError } from '../../../core/models/api-error.model';
 export class MemberListComponent implements OnInit {
 
   project: ProjectResponse | null = null;
+  members: ProjectMemberResponse[] = [];
   invites: InviteResponse[] = [];
   isLoading = true;
   isSubmitting = false;
   errorMessage: string | null = null;
   successMessage: string | null = null;
+  generatedInviteLink: string | null = null;
+  generatedInviteRole: ProjectRole | null = null;
+  linkCopyMessage: string | null = null;
   readonly roles: ProjectRole[] = ['ADMIN', 'DEVELOPER', 'VIEWER'];
+  readonly roleLabels: Record<ProjectRole, string> = {
+    ADMIN: 'Administrador',
+    DEVELOPER: 'Desenvolvedor',
+    VIEWER: 'Visualizador'
+  };
 
   readonly inviteForm = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -73,18 +83,39 @@ export class MemberListComponent implements OnInit {
     if (!this.project) return;
     this.memberService.createInviteLink(this.project.id, role).subscribe({
       next: (invite) => {
-        this.successMessage = `Link de convite criado: ${invite.acceptanceUrl}`;
+        this.generatedInviteLink = invite.acceptanceUrl;
+        this.generatedInviteRole = role;
+        this.linkCopyMessage = null;
+        this.successMessage = 'Link de convite criado com sucesso.';
         this.loadInvites(this.project!.id);
       },
       error: (error: ApiError) => this.errorMessage = error.message
     });
   }
 
+  async copyGeneratedInviteLink(): Promise<void> {
+    if (!this.generatedInviteLink) return;
+
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API indisponível');
+      }
+
+      await navigator.clipboard.writeText(this.generatedInviteLink);
+      this.linkCopyMessage = 'Link copiado para a área de transferência.';
+    } catch {
+      this.linkCopyMessage = 'Não foi possível copiar automaticamente. Selecione e copie o link manualmente.';
+    }
+  }
+
+  importBoardId: number | null = null;
+
   importGithub(role: ProjectRole): void {
     if (!this.project) return;
     this.isSubmitting = true;
     this.errorMessage = null;
-    this.memberService.importGithub(this.project.id, role).subscribe({
+    if (!this.importBoardId) { this.isSubmitting = false; this.errorMessage = "Selecione um board vinculado ao GitHub."; return; }
+    this.memberService.importGithub(this.importBoardId, role).subscribe({
       next: (result: GithubImportResponse) => {
         this.isSubmitting = false;
         this.successMessage = `${result.added} membro(s) adicionado(s), ${result.invited} convite(s) enviado(s) e ${result.ignored} ignorado(s).`;
@@ -121,11 +152,25 @@ export class MemberListComponent implements OnInit {
     });
   }
 
+  initials(name: string): string {
+    return name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  }
+
   private load(projectId: number): void {
     this.isLoading = true;
-    this.projectService.getById(projectId).subscribe({
-      next: (project) => {
+    forkJoin({
+      project: this.projectService.getById(projectId),
+      members: this.memberService.list(projectId)
+    }).subscribe({
+      next: ({ project, members }) => {
         this.project = project;
+        this.members = members;
         this.isLoading = false;
         if (this.canManage) this.loadInvites(projectId);
       },

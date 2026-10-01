@@ -16,6 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -105,6 +108,42 @@ class GithubOAuthServiceTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().getUsername()).isEqualTo("octocat2");
+    }
+
+    @Test
+    void handleCallback_deveManterUsernameComNoMaximo39Caracteres_quandoColide() {
+        String githubUsername = "a".repeat(39);
+        profile = new GithubClient.GithubProfile(999L, githubUsername, "Octo Cat", "http://avatar.example.com/octocat.png");
+        when(githubClient.fetchProfile("access-token-fake")).thenReturn(profile);
+
+        when(userRepository.findByGithubId(999L)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("octocat@example.com")).thenReturn(Optional.empty());
+        when(userRepository.existsByUsername(githubUsername)).thenReturn(true);
+        when(userRepository.existsByUsername("a".repeat(38) + "2")).thenReturn(false);
+
+        githubOAuthService.handleCallback(CODE, STATE);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getUsername()).isEqualTo("a".repeat(38) + "2");
+    }
+
+    @Test
+    void buildAuthorizationUrl_deveCodificarParametrosOAuth_eManterValores() {
+        when(stateService.create(null)).thenReturn("state-fake");
+
+        String authorizationUrl = githubOAuthService.buildAuthorizationUrl(null);
+        URI uri = URI.create(authorizationUrl);
+        String decodedQuery = URLDecoder.decode(uri.getRawQuery(), StandardCharsets.UTF_8);
+
+        assertThat(uri.getScheme()).isEqualTo("https");
+        assertThat(uri.getHost()).isEqualTo("github.com");
+        assertThat(uri.getPath()).isEqualTo("/login/oauth/authorize");
+        assertThat(authorizationUrl).doesNotContain(" ");
+        assertThat(decodedQuery).contains("client_id=client-id-fake");
+        assertThat(decodedQuery).contains("redirect_uri=http://localhost:8080/api/auth/github/callback");
+        assertThat(decodedQuery).contains("scope=repo user:email");
+        assertThat(decodedQuery).contains("state=state-fake");
     }
 
     @Test

@@ -149,14 +149,14 @@ Todos exigem autenticação, exceto o aceite de convite quando indicado.
 
 ---
 
-### 5.3 Importar colaboradores do GitHub — `POST /api/projects/{projectId}/members/import-github`
+### 5.3 Importar colaboradores do GitHub — `POST /api/boards/{boardId}/members/import-github`
 
 **Entrada**: papel a conceder, lista de logins a importar (opcional — se omitido, importa todos)
 
 **Comportamento**
-1. Valida que o projeto tem repositório vinculado.
-2. Consulta os colaboradores do repositório.
-3. Para cada colaborador cujo email ou github id corresponda a um usuário do devBoard: adiciona como membro diretamente.
+1. Valida que o board tem repositório vinculado.
+2. Consulta os colaboradores do repositório daquele board.
+3. Para cada colaborador cujo email ou github id corresponda a um usuário do devBoard: adiciona como membro do **projeto do board** diretamente.
 4. Para os demais: cria convite por email quando o email for público.
 5. Ignora quem já é membro ou é o dono.
 
@@ -167,7 +167,7 @@ Todos exigem autenticação, exceto o aceite de convite quando indicado.
 **Erros**
 | Situação | Status |
 |---|---|
-| Projeto sem repositório vinculado | 400 |
+| Board sem repositório vinculado | 400 |
 | Token GitHub inválido | 401 |
 | GitHub indisponível | 503 |
 
@@ -275,8 +275,8 @@ Idêntico ao anterior, exceto que no passo 4 o convidado faz login. Se estiver a
 4. O link permanece válido por 7 dias ou até ser revogado.
 
 ### 6.4 Importação de colaboradores do GitHub
-1. Admin aciona a importação em um projeto com repositório vinculado.
-2. Sistema lista os colaboradores do repositório.
+1. Admin aciona a importação em um board com repositório vinculado.
+2. Sistema lista os colaboradores do repositório daquele board.
 3. Quem já tem conta no devBoard entra direto como membro.
 4. Quem não tem recebe convite por email, quando o email for público no GitHub.
 5. Sistema apresenta o resumo do que foi feito.

@@ -44,6 +44,31 @@ public class Board {
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault = false;
 
+
+    @Column(name = "github_repo_id", unique = true)
+    private Long githubRepoId;
+    private String githubRepoOwner;
+    private String githubRepoName;
+    private String githubRepoUrl;
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "board_watched_branches", joinColumns = @JoinColumn(name = "board_id"))
+    @Column(name = "branch_name", nullable = false)
+    private java.util.List<String> watchedBranches = new java.util.ArrayList<>();
+    private String defaultBaseBranch = "main";
+    private LocalDateTime lastSyncAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "github_user_id")
+    private User githubUser;
+    private Long githubHookId;
+    private boolean githubReauthRequired;
+    private boolean moveOnCommit = true;
+    private boolean moveOnPrOpen = true;
+    private boolean moveOnPrMerge = true;
+    private boolean importIssues = true;
+    private boolean closeIssueOnDone = true;
+    private String branchPattern = "feature/task-{id}-{title}";
+    public boolean hasGithubRepo() { return githubRepoId != null; }
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

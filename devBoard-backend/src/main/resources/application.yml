@@ -46,6 +46,9 @@ app:
 
   base-url: ${APP_BASE_URL:http://localhost:4200}
 
+  mail:
+    from: ${MAIL_FROM:${MAIL_USER:}}
+
   password-reset:
     expiration-hours: 24
     max-attempts: 5
@@ -57,3 +60,8 @@ app:
 
   encryption:
     key: ${ENCRYPTION_KEY:}
+
+# Board-scoped integration; all secrets are supplied by the environment.
+github:
+  webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
+  webhook-url: ${GITHUB_WEBHOOK_URL:http://localhost:8080/webhook/github}

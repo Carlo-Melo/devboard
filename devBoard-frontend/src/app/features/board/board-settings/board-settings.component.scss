@@ -1,0 +1,10 @@
+@use '../../projects/projects-shared.scss';
+.page-container { max-width: 900px; }
+.card { margin: 1.5rem 0; padding: 1.5rem; }
+form, fieldset { display: grid; gap: .8rem; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+input, select, textarea { width: 100%; padding: .65rem; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg-shell); color: var(--color-text-primary); }
+.check { display: flex; gap: .6rem; align-items: center; }
+.check input { width: auto; }
+button { justify-self: start; margin-right: .5rem; }
+p { line-height: 1.5; }

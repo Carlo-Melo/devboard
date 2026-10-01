@@ -44,26 +44,23 @@ public class ProjectService {
     private final PermissionService permissionService;
     private final ProjectMapper projectMapper;
     private final BoardService boardService;
+    private final com.devboard.service.github.BoardGithubService githubService;
+    private final LabelService labelService;
 
     @Transactional
     public ProjectResponse create(CreateProjectRequest request, Long userId) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
-        if (request.getGithubRepoId() != null && owner.getGithubToken() == null) {
-            throw new AccessDeniedException("GitHub não conectado");
-        }
 
         Project project = new Project();
         project.setName(request.getName());
         project.setDescription(request.getDescription());
         project.setOwner(owner);
-        if (request.getDefaultBaseBranch() != null && !request.getDefaultBaseBranch().isBlank()) {
-            project.setDefaultBaseBranch(request.getDefaultBaseBranch());
-        }
 
         Project saved = projectRepository.save(project);
         boardService.createDefaultBoard(saved);
+        labelService.createDefaults(saved.getId());
 
         log.info("Projeto criado: id={}, ownerId={}", saved.getId(), userId);
 
@@ -78,7 +75,8 @@ public class ProjectService {
         Page<Project> projects = projectRepository.findAccessibleByUser(userId, archived, pageRequest);
 
         return PageResponse.from(projects, project ->
-                projectMapper.toSummary(project, projectMemberRepository.countByProjectId(project.getId())));
+                projectMapper.toSummary(project, projectMemberRepository.countByProjectId(project.getId()),
+                        boardRepository.countByProjectId(project.getId()), boardRepository.countByProjectIdAndGithubRepoIdIsNotNull(project.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -99,12 +97,6 @@ public class ProjectService {
         Project project = findProjectOrThrow(projectId);
         project.setName(request.getName());
         project.setDescription(request.getDescription());
-        if (request.getWatchedBranches() != null) {
-            project.setWatchedBranches(request.getWatchedBranches());
-        }
-        if (request.getDefaultBaseBranch() != null && !request.getDefaultBaseBranch().isBlank()) {
-            project.setDefaultBaseBranch(request.getDefaultBaseBranch());
-        }
 
         ProjectRole currentUserRole = permissionService.resolveRole(projectId, userId);
         boolean isOwner = permissionService.isOwner(projectId, userId);
@@ -118,6 +110,7 @@ public class ProjectService {
         Project project = findProjectOrThrow(projectId);
         project.setArchived(true);
         project.setArchivedAt(LocalDateTime.now());
+        githubService.removeProjectHooks(projectId);
 
         log.info("Projeto arquivado: id={}, userId={}", projectId, userId);
     }

@@ -175,7 +175,14 @@ export class BoardViewComponent implements OnInit {
           dueDate: task.dueDate,
           estimate: task.estimate,
           position: task.position,
-          commentCount: 0
+          commentCount: 0,
+          githubIssueId: task.githubIssueId,
+          githubIssueUrl: task.githubIssueUrl,
+          githubPrId: task.githubPrId,
+          githubPrUrl: task.githubPrUrl,
+          githubPrState: task.githubPrState,
+          branch: task.branch,
+          labels: task.labels
         });
         column.taskCount = column.tasks.length;
         this.isCreatingTask = false;

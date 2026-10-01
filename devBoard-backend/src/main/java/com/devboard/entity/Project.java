@@ -1,8 +1,6 @@
 package com.devboard.entity;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -19,8 +17,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "projects", indexes = {
@@ -46,34 +42,12 @@ public class Project {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @Column(name = "github_repo_id")
-    private Long githubRepoId;
-
-    @Column(name = "github_repo_owner")
-    private String githubRepoOwner;
-
-    @Column(name = "github_repo_name")
-    private String githubRepoName;
-
-    @Column(name = "github_repo_url")
-    private String githubRepoUrl;
-
-    @ElementCollection
-    @CollectionTable(name = "project_watched_branches", joinColumns = @JoinColumn(name = "project_id"))
-    @Column(name = "branch_name", nullable = false)
-    private List<String> watchedBranches = new ArrayList<>();
-
-    @Column(name = "default_base_branch", nullable = false)
-    private String defaultBaseBranch = "main";
-
     @Column(nullable = false)
     private Boolean archived = false;
 
     @Column(name = "archived_at")
     private LocalDateTime archivedAt;
 
-    @Column(name = "last_sync_at")
-    private LocalDateTime lastSyncAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -83,7 +57,4 @@ public class Project {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public boolean hasGithubRepo() {
-        return githubRepoId != null;
-    }
 }

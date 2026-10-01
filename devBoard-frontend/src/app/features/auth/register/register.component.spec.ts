@@ -40,7 +40,7 @@ describe('RegisterComponent', () => {
     const form = fixture.componentInstance.registerForm;
 
     form.patchValue({
-      username: 'joao_dev',
+      username: 'joao-dev',
       email: 'joao@example.com',
       password: 'SecurePass123',
       confirmPassword: 'Different123'
@@ -55,7 +55,7 @@ describe('RegisterComponent', () => {
       expiresAt: new Date().toISOString(),
       user: {
         id: 1,
-        username: 'joao_dev',
+        username: 'joao-dev',
         email: 'joao@example.com',
         authProvider: 'TRADITIONAL',
         githubConnected: false
@@ -65,7 +65,7 @@ describe('RegisterComponent', () => {
 
     const fixture = createComponent();
     fixture.componentInstance.registerForm.setValue({
-      username: 'joao_dev',
+      username: 'joao-dev',
       email: 'joao@example.com',
       password: 'SecurePass123',
       confirmPassword: 'SecurePass123',
@@ -75,7 +75,7 @@ describe('RegisterComponent', () => {
     fixture.componentInstance.onSubmit();
 
     expect(authServiceSpy.register).toHaveBeenCalled();
-    expect(fixture.componentInstance.registeredUser?.username).toBe('joao_dev');
+    expect(fixture.componentInstance.registeredUser?.username).toBe('joao-dev');
   });
 
   it('should surface backend field errors on the matching control', () => {
@@ -88,7 +88,7 @@ describe('RegisterComponent', () => {
 
     const fixture = createComponent();
     fixture.componentInstance.registerForm.setValue({
-      username: 'joao_dev',
+      username: 'joao-dev',
       email: 'joao@example.com',
       password: 'SecurePass123',
       confirmPassword: 'SecurePass123',
@@ -99,5 +99,24 @@ describe('RegisterComponent', () => {
 
     expect(fixture.componentInstance.errorMessage).toBe('Username já está em uso');
     expect(fixture.componentInstance.registerForm.get('username')?.errors?.['server']).toBe('Username já está em uso');
+  });
+
+  it('should accept a GitHub-compatible username with hyphens', () => {
+    const fixture = createComponent();
+    const username = fixture.componentInstance.registerForm.get('username');
+
+    username?.setValue('Carlos-Dev');
+
+    expect(username?.valid).toBeTrue();
+  });
+
+  it('should reject usernames outside the GitHub format', () => {
+    const fixture = createComponent();
+    const username = fixture.componentInstance.registerForm.get('username');
+
+    ['Carlos_Dev', 'Carlos.Dev', '-Carlos', 'Carlos-', 'Carlos--Dev'].forEach(value => {
+      username?.setValue(value);
+      expect(username?.invalid).withContext(value).toBeTrue();
+    });
   });
 });

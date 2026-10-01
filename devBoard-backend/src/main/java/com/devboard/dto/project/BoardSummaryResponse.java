@@ -10,4 +10,5 @@ public class BoardSummaryResponse {
     private Long id;
     private String name;
     private boolean defaultBoard;
+    private boolean githubLinked;
 }

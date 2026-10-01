@@ -19,6 +19,14 @@ export interface BoardResponse {
   name: string;
   description?: string;
   defaultBoard: boolean;
+  githubRepoId?: number;
+  githubRepoOwner?: string;
+  githubRepoName?: string;
+  githubRepoUrl?: string;
+  watchedBranches: string[];
+  defaultBaseBranch: string;
+  lastSyncAt?: string;
+  githubReauthRequired: boolean;
   columns: BoardColumnResponse[];
   createdAt: string;
   updatedAt: string;

@@ -18,15 +18,8 @@ public class ProjectResponse {
     private String currentUserRole;
     private boolean currentUserOwner;
 
-    private Long githubRepoId;
-    private String githubRepoOwner;
-    private String githubRepoName;
-    private String githubRepoUrl;
-    private List<String> watchedBranches;
-    private String defaultBaseBranch;
 
     private boolean archived;
-    private LocalDateTime lastSyncAt;
 
     private List<ProjectMemberResponse> members;
     private List<BoardSummaryResponse> boards;
