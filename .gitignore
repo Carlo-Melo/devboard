@@ -1,12 +1,28 @@
 # Dependencies and build outputs
 **/node_modules/
 **/dist/
+**/build/
+**/out-tsc/
+**/bazel-out/
 **/.angular/
-**/coverage/
 **/target/
-**/target-board-domain/
-output/board-domain-test-db/
-/tmp/
+**/target-*/
+*.class
+*.tsbuildinfo
+
+# Local caches and generated test reports
+**/.cache/
+**/.sass-cache/
+**/.npm/
+**/.m2/
+**/coverage/
+**/.nyc_output/
+**/test-results/
+**/playwright-report/
+
+# Local exports, LinkedIn assets, downloaded tools and temporary files
+/output/
+**/tmp/
 
 # Local configuration and secrets
 **/.env
@@ -16,12 +32,15 @@ output/board-domain-test-db/
 *.key
 *.p12
 *.pfx
+*.jks
+*.keystore
 
 # Logs and temporary runtime files
 *.log
 logs/
 **/logs/
 *.pid
+*.pid.lock
 *.seed
 
 # Auditoria: evidências são geradas localmente e podem conter caminhos ou saídas de execução
@@ -30,6 +49,7 @@ docs/auditoria/evidencias/
 # IDEs and operating-system files
 .idea/
 .vscode/
+.history/
 *.iml
 .classpath
 .project
@@ -37,3 +57,8 @@ docs/auditoria/evidencias/
 .factorypath
 .DS_Store
 Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+*.swp
+*.swo
+*~

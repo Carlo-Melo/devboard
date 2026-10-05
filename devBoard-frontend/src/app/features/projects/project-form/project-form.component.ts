@@ -24,6 +24,10 @@ export class ProjectFormComponent implements OnInit {
     return this.projectId !== null;
   }
 
+  get cancelLink(): (string | number)[] {
+    return this.projectId === null ? ['/projects/list'] : ['/projects', this.projectId];
+  }
+
   get f() {
     return this.form.controls;
   }

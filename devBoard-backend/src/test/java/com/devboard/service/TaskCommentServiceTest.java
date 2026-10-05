@@ -144,14 +144,15 @@ class TaskCommentServiceTest {
     }
 
     @Test
-    void delete_devePermitirAutor_semVerificarPapel() {
+    void delete_devePermitirAutor_comVinculoEBoardAtivo() {
         TaskComment comment = comment(1L, 9L, task(100L));
         when(taskCommentRepository.findById(1L)).thenReturn(Optional.of(comment));
 
         taskCommentService.delete(1L, 9L);
 
         verify(taskCommentRepository).delete(comment);
-        verify(permissionService, never()).requireRole(any(), any(), any());
+        verify(permissionService).requireRole(20L, 9L, ProjectRole.VIEWER);
+        verify(permissionService).requireActiveBoard(comment.getTask().getColumn().getBoard());
     }
 
     @Test

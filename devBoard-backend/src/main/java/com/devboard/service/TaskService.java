@@ -60,6 +60,7 @@ public class TaskService {
         BoardColumn column = findColumnOrThrow(request.getColumnId());
         Long projectId = column.getBoard().getProject().getId();
         permissionService.requireRole(projectId, userId, ProjectRole.DEVELOPER);
+        permissionService.requireActiveBoard(column.getBoard());
 
         User creator = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
@@ -98,6 +99,7 @@ public class TaskService {
     public TaskResponse getById(Long taskId, Long userId) {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireRole(task.resolveProjectId(), userId, ProjectRole.VIEWER);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         return taskMapper.toResponse(task, loadComments(taskId), loadActivities(taskId));
     }
@@ -106,6 +108,7 @@ public class TaskService {
     public TaskResponse update(Long taskId, UpdateTaskRequest request, Long userId) {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireTaskEditable(task, userId);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
         Long projectId = task.resolveProjectId();
         task.setGithubManuallyEdited(true);
 
@@ -176,6 +179,7 @@ public class TaskService {
         Task task = findTaskOrThrow(taskId);
         Long projectId = task.resolveProjectId();
         permissionService.requireRole(projectId, userId, ProjectRole.DEVELOPER);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         if (request.getPosition() == null || request.getPosition() < 0) {
             throw new InvalidRequestException("Posição inválida");
@@ -232,6 +236,7 @@ public class TaskService {
     public void archive(Long taskId, Long userId) {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireTaskEditable(task, userId);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         List<Task> remaining = taskRepository.findByColumnIdAndArchivedFalseOrderByPositionAsc(task.getColumn().getId());
         remaining.removeIf(t -> t.getId().equals(task.getId()));

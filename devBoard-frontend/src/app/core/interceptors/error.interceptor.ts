@@ -10,7 +10,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const apiError: ApiError = {
         status: error.status,
         message: body.message ?? 'Erro inesperado. Tente novamente.',
-        fieldErrors: body.fieldErrors
+        fieldErrors: body.fieldErrors,
+        retryAfterSeconds: error.headers.get('Retry-After') ? Number(error.headers.get('Retry-After')) : undefined
       };
 
       if (error.status === 401) {

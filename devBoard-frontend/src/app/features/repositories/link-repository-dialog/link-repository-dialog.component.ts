@@ -1,0 +1,43 @@
+import { CommonModule } from '@angular/common';
+import { Component, DestroyRef, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { A11yModule } from '@angular/cdk/a11y';
+import { GithubDestination, GithubRepoResponse } from '../../../core/models/github.models';
+import { GithubService } from '../../../core/services/github.service';
+import { forkJoin } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+@Component({ selector: 'app-link-repository-dialog', standalone:true, imports:[CommonModule,ReactiveFormsModule,RouterLink,A11yModule], template:`
+<div class="scrim" *ngIf="repo" (click)="close()" role="presentation"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" cdkTrapFocus cdkTrapFocusAutoCapture (click)="$event.stopPropagation()">
+ <button class="close" type="button" aria-label="Fechar" (click)="close()" [disabled]="submitting">×</button><p class="eyebrow">INTEGRAÇÃO GITHUB</p><h2 id="dialog-title">Vincular repositório</h2><div class="repo-summary"><strong>{{repo.fullName}}</strong><span>{{repo.description || 'Repositório sem descrição.'}}</span></div>
+ <div *ngIf="loading" class="hint" role="status">Carregando quadros disponíveis…</div><div *ngIf="error" class="error" role="alert">{{error}} <span *ngIf="retryAfterSeconds">Tente novamente em {{retryAfterSeconds}}s.</span> <button type="button" class="text-button" (click)="loadDestinations()" [disabled]="retryAfterSeconds>0">Tentar novamente</button></div>
+ <form [formGroup]="form" (ngSubmit)="submit()" *ngIf="!loading && destinations.length">
+  <label>Projeto<select formControlName="projectId"><option value="">Selecione um projeto</option><option *ngFor="let p of projects" [value]="p">{{projectName(p)}}</option></select></label>
+  <label>Quadro<select formControlName="boardId"><option value="">Selecione um quadro</option><option *ngFor="let d of projectBoards" [value]="d.boardId">{{d.boardName}}</option></select></label>
+  <label>Branch base<input formControlName="baseBranch" maxlength="255" required></label>
+  <label>Branches monitoradas <small>(opcional, separadas por vírgula)</small><input formControlName="branches" placeholder="main, develop"></label>
+  <div class="actions"><button class="btn-secondary" type="button" (click)="close()" [disabled]="submitting">Cancelar</button><button class="btn-primary" type="submit" [disabled]="form.invalid || submitting || retryAfterSeconds>0">{{submitting?'Vinculando…':retryAfterSeconds?'Aguarde '+retryAfterSeconds+'s':'Vincular'}}</button></div>
+ </form>
+ <div class="empty" *ngIf="!loading && !error && !destinations.length">Não há quadros elegíveis disponíveis. Você precisa ser dono do projeto ou ADMIN e o quadro deve estar sem repositório.<div class="actions"><a class="btn-secondary" routerLink="/projects/new" (click)="close()">Criar projeto</a><button class="btn-secondary" type="button" (click)="close()">Fechar</button></div></div>
+ <div class="success" *ngIf="success">Repositório vinculado. Configuração da integração em andamento.<div class="actions"><a class="btn-primary" [routerLink]="['/boards',linkedBoardId]" (click)="close()">Abrir quadro</a><a class="btn-secondary" [routerLink]="['/boards',linkedBoardId,'settings']" (click)="close()">Configurar integração</a></div></div>
+</section></div>`, styles:[`
+.scrim{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#07100dcc}.dialog{position:relative;width:min(540px,100%);max-height:calc(100dvh - 36px);overflow:auto;padding:28px;border:1px solid #35453e;border-radius:18px;background:#151f1b;color:#e7efeb;box-shadow:0 24px 80px #0009}.close{position:absolute;right:15px;top:10px;border:0;background:none;color:#a7b8b0;font-size:26px;cursor:pointer}.eyebrow{color:#80d9bd;font-size:.7rem;letter-spacing:.13em;font-weight:700}.dialog h2{margin:4px 0 18px;font-size:1.45rem}.repo-summary{display:grid;gap:6px;padding:13px;border:1px solid #2b3934;border-radius:11px;background:#1c2823}.repo-summary span,.hint,.empty{color:#9aaba3;font-size:.85rem;line-height:1.5}.dialog form{display:grid;gap:14px;margin-top:18px}.dialog label{display:grid;gap:6px;color:#c9d6cf;font-size:.82rem}.dialog label small{font-weight:400;color:#82948c}.dialog input,.dialog select{width:100%;height:42px;border:1px solid #36473f;border-radius:9px;background:#101815;color:#e7efeb;padding:0 12px;font:inherit}.dialog input:focus-visible,.dialog select:focus-visible,.dialog button:focus-visible,.dialog a:focus-visible{outline:2px solid #7bd9bd;outline-offset:2px}.actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;margin-top:10px}.error{padding:12px;border-radius:9px;background:#382a27;color:#f0a18b}.text-button{border:0;background:none;color:#8ae0c4;text-decoration:underline;cursor:pointer}.empty,.success{padding-top:14px}.success{color:#9be0c6;line-height:1.5}.success .actions{margin-top:15px}@media(max-width:480px){.dialog{padding:23px 18px}.actions>*{flex:1;text-align:center;justify-content:center}}
+`]
+})
+export class LinkRepositoryDialogComponent implements OnChanges {
+ private destroyRef=inject(DestroyRef);
+ @Input() repo:GithubRepoResponse|null=null; @Output() closed=new EventEmitter<void>(); @Output() linked=new EventEmitter<number>();
+ destinations:GithubDestination[]=[]; loading=false; submitting=false; error=''; retryAfterSeconds=0; success=false; linkedBoardId:number|null=null; private projectNames=new Map<number,string>(); private retryTimer:number|undefined;
+ form=this.fb.group({projectId:['',Validators.required],boardId:['',Validators.required],baseBranch:['',[Validators.required,Validators.maxLength(255)]],branches:['']});
+ constructor(private fb:FormBuilder,private github:GithubService) { this.form.controls.projectId.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(()=>this.form.controls.boardId.setValue(''));this.destroyRef.onDestroy(()=>window.clearInterval(this.retryTimer)); }
+ ngOnChanges(changes:SimpleChanges):void { if(changes['repo']?.currentValue){this.form.reset({projectId:'',boardId:'',baseBranch:this.repo?.defaultBranch||'main',branches:''});this.success=false;this.error='';this.destinations=[];this.loadDestinations();} }
+ get projects():number[]{return [...new Set(this.destinations.map(d=>d.projectId))];}
+ get projectBoards():GithubDestination[]{return this.destinations.filter(d=>String(d.projectId)===String(this.form.controls.projectId.value));}
+ projectName(id:number):string{return this.projectNames.get(id)||this.destinations.find(d=>d.projectId===id)?.projectName||'';}
+ loadDestinations():void {this.loading=true;this.error='';this.github.destinations(0,100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:first=>{const remaining=Array.from({length:Math.max(0,first.totalPages-1)},(_,i)=>this.github.destinations(i+1,100));if(!remaining.length){this.setDestinations(first.content);return;}forkJoin(remaining).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:pages=>this.setDestinations([...first.content,...pages.flatMap(p=>p.content)]),error:(e:any)=>{this.error=e?.message||'Não foi possível carregar todos os quadros disponíveis.';this.loading=false;}});},error:(e:any)=>{this.error=e?.message||'Não foi possível carregar os quadros disponíveis.';this.loading=false;}});}
+ private setDestinations(items:GithubDestination[]):void{this.destinations=items;this.projectNames=new Map(items.map(d=>[d.projectId,d.projectName]));this.loading=false;}
+ submit():void {if(this.form.invalid||!this.repo||this.submitting||this.retryAfterSeconds)return;const v=this.form.getRawValue();this.submitting=true;const branches=(v.branches||'').split(',').map(x=>x.trim()).filter(Boolean);this.github.link(Number(v.boardId),this.repo.id,v.baseBranch||this.repo.defaultBranch||'main',branches).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:r=>{this.submitting=false;this.success=true;this.linkedBoardId=r.board.id;this.linked.emit(this.repo!.id);},error:(e:any)=>{this.submitting=false;this.error=e?.message||'Não foi possível vincular o repositório.';window.clearInterval(this.retryTimer);this.retryAfterSeconds=Math.max(0,e?.retryAfterSeconds||0);if(this.retryAfterSeconds)this.retryTimer=window.setInterval(()=>{this.retryAfterSeconds=Math.max(0,this.retryAfterSeconds-1);if(!this.retryAfterSeconds)window.clearInterval(this.retryTimer);},1000);}});}
+ close():void{if(this.submitting)return;this.repo=null;this.closed.emit();}
+ @HostListener('document:keydown.escape') onEscape():void{if(this.repo&&!this.submitting)this.close();}
+}

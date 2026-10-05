@@ -65,3 +65,8 @@
     }
   }
 }
+ .board-row { gap: 12px; flex-wrap: wrap; }
+ .board-row .member-info { flex: 1; min-width: 140px; flex-wrap: wrap; }
+ .archived-toggle { margin-top: 16px; }
+ #archived-boards { margin-top: 20px; }
+ #archived-boards p { margin: 8px 0; }

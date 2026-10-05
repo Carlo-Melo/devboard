@@ -286,7 +286,7 @@ class BoardServiceTest {
     void deleteBoard_deveLancarConflict_quandoEUnicoQuadroDoProjeto() {
         Board target = board(101L);
         when(boardRepository.findById(101L)).thenReturn(Optional.of(target));
-        when(boardRepository.countByProjectId(20L)).thenReturn(1L);
+        when(boardRepository.countByProjectIdAndArchivedFalse(20L)).thenReturn(1L);
 
         assertThatThrownBy(() -> boardService.deleteBoard(101L, 1L))
                 .isInstanceOf(ConflictException.class);
@@ -296,8 +296,8 @@ class BoardServiceTest {
     void deleteBoard_deveExcluir_quandoHaOutrosQuadros() {
         Board target = board(101L);
         when(boardRepository.findById(101L)).thenReturn(Optional.of(target));
-        when(boardRepository.countByProjectId(20L)).thenReturn(2L);
-        when(boardRepository.findByProjectIdOrderByCreatedAtAsc(20L)).thenReturn(List.of(target, board(102L)));
+        when(boardRepository.countByProjectIdAndArchivedFalse(20L)).thenReturn(2L);
+        when(boardRepository.findByProjectIdAndArchivedFalseOrderByCreatedAtAsc(20L)).thenReturn(List.of(target, board(102L)));
         when(taskRepository.existsByColumnBoardId(101L)).thenReturn(false);
         when(boardColumnRepository.findByBoardIdOrderByPositionAsc(101L)).thenReturn(List.of());
 

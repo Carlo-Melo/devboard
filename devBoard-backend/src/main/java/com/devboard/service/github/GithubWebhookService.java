@@ -34,12 +34,12 @@ public class GithubWebhookService {
         long repoId;
         try { repoId = json.readTree(body).path("repository").path("id").asLong(); }
         catch (Exception e) { log.warn("Webhook GitHub descartado: JSON inválido"); return; }
-        var board = boards.findByGithubRepoId(repoId).orElse(null);
+        var board = boards.findByGithubRepoIdAndArchivedFalse(repoId).orElse(null);
         if (board == null || Boolean.TRUE.equals(board.getProject().getArchived())) {
             log.info("Webhook GitHub descartado: repositoryId={}", repoId); return;
         }
-        int inserted = jdbc.update("INSERT INTO github_deliveries(id, board_id, repository_id, event_type, payload) VALUES (?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING",
-                deliveryId, board.getId(), repoId, eventType, new String(body, StandardCharsets.UTF_8));
+        int inserted = jdbc.update("INSERT INTO github_deliveries(id, board_id, repository_id, event_type, payload, board_generation) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO NOTHING",
+                deliveryId, board.getId(), repoId, eventType, new String(body, StandardCharsets.UTF_8), board.getGithubGeneration());
         log.info("Webhook GitHub recebido: boardId={}, evento={}, novo={}", board.getId(), eventType, inserted == 1);
         if (inserted == 1) events.publishEvent(new GithubDeliveryEvent(deliveryId));
     }

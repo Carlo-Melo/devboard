@@ -40,7 +40,8 @@ public class GithubEventProcessor {
         Long boardId = ((Number) row.get("board_id")).longValue();
         Long repoId = ((Number) row.get("repository_id")).longValue();
         Board b = boards.findLockedById(boardId).orElse(null);
-        if (b != null && repoId.equals(b.getGithubRepoId()) && !Boolean.TRUE.equals(b.getProject().getArchived())) {
+        if (b != null && !Boolean.TRUE.equals(b.getArchived()) && b.getGithubGeneration() == ((Number) row.get("board_generation")).longValue()
+                && repoId.equals(b.getGithubRepoId()) && !Boolean.TRUE.equals(b.getProject().getArchived())) {
             JsonNode payload = json.readTree((String) row.get("payload"));
             switch ((String) row.get("event_type")) {
                 case "push" -> push(b, payload);
@@ -119,6 +120,7 @@ public class GithubEventProcessor {
     }
     /** Used by both authenticated webhooks and the repository-scoped import job. */
     public void issue(Board b, JsonNode issue, String action) {
+        if (Boolean.TRUE.equals(b.getArchived())) return;
         if (issue.has("pull_request")) return;
         long issueId = issue.path("id").asLong();
         if (issueId <= 0) return;
@@ -181,7 +183,7 @@ public class GithubEventProcessor {
         activity(task, TaskActivityType.MOVED, "Movida pelo GitHub para " + target.getName(), Map.of("fromColumnId", origin.getId(), "toColumnId", target.getId()));
         if (target.getWipLimit() != null && count >= target.getWipLimit()) activity(task, TaskActivityType.WIP_EXCEEDED, "Automação excedeu o limite WIP", Map.of());
         if (syncIssue && task.getGithubIssueId() != null && b.isCloseIssueOnDone() && role == ColumnRole.DONE)
-            events.publishEvent(new GithubJobEvent("ISSUE_STATE", b.getId(), b.getGithubRepoId(), b.getGithubUser() == null ? b.getProject().getOwner().getId() : b.getGithubUser().getId(), null, task.getId(), "closed"));
+            events.publishEvent(new GithubJobEvent("ISSUE_STATE", b.getId(), b.getGithubRepoId(), b.getGithubUser() == null ? b.getProject().getOwner().getId() : b.getGithubUser().getId(), null, task.getId(), "closed", b.getGithubGeneration()));
         log.info("Automação aplicada: boardId={}, taskId={}, papel={}", b.getId(), task.getId(), role);
     }
     private void activity(Task t, TaskActivityType type, String description, Map<String,Object> metadata) {

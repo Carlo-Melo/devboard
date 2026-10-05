@@ -59,14 +59,16 @@ public class TaskGithubService {
     }
     @Transactional public void queueIssueState(Long id, boolean closed, Long userId) {
         Task t = task(id); Board b = t.getColumn().getBoard();
+        permissions.requireActiveBoard(b);
         if (!b.hasGithubRepo() || t.getGithubIssueId() == null || !b.isCloseIssueOnDone()) return;
         Long githubUserId = b.getGithubUser() == null ? userId : b.getGithubUser().getId();
         events.publishEvent(job("ISSUE_STATE", b, t, githubUserId, closed ? "closed" : "open"));
     }
-    private GithubJobEvent job(String op, Board b, Task t, Long userId, String value) { return new GithubJobEvent(op,b.getId(),b.getGithubRepoId(),userId,null,t.getId(),value); }
+    private GithubJobEvent job(String op, Board b, Task t, Long userId, String value) { return new GithubJobEvent(op,b.getId(),b.getGithubRepoId(),userId,null,t.getId(),value,b.getGithubGeneration()); }
     private Task task(Long id) { return tasks.findByIdWithDetails(id).orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada")); }
     private Board linked(Task t) {
         Board b = t.getColumn().getBoard();
+        permissions.requireActiveBoard(b);
         if (!b.hasGithubRepo()) throw new InvalidRequestException("Board sem repositório vinculado");
         if (Boolean.TRUE.equals(b.getProject().getArchived())) throw new ConflictException("Projeto arquivado");
         return b;

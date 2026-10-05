@@ -20,7 +20,7 @@ As colunas também são o alvo das automações do GitHub: mover uma tarefa entr
 ## 2. ESCOPO
 
 ### Dentro do escopo
-- Criar, listar, editar e excluir boards de um projeto
+- Criar, listar, editar, arquivar e restaurar boards de um projeto
 - Criar, editar, reordenar e excluir colunas
 - Conjunto padrão de colunas na criação do projeto
 - Visualização do board completo com tarefas agrupadas por coluna
@@ -35,7 +35,7 @@ As colunas também são o alvo das automações do GitHub: mover uma tarefa entr
 - Swimlanes
 - Templates de board compartilháveis entre projetos
 - Vincular mais de um repositório ao mesmo board
-- Vincular o mesmo repositório a mais de um board
+- Vincular o mesmo repositório a mais de um board ativo
 
 ---
 
@@ -50,6 +50,8 @@ As colunas também são o alvo das automações do GitHub: mover uma tarefa entr
 | nome | texto | obrigatório, 3–100 caracteres; único dentro do projeto |
 | descrição | texto | opcional |
 | é padrão | booleano | exatamente um board padrão por projeto |
+| arquivado | booleano | default falso; independente do arquivamento do projeto e das tarefas |
+| arquivado em | timestamp com fuso | momento do arquivamento; nulo após restaurar |
 | github repo id | numérico | opcional; identificador do repositório no GitHub |
 | github repo owner | texto | opcional; dono ou organização do repositório |
 | github repo name | texto | opcional |
@@ -64,7 +66,7 @@ As colunas também são o alvo das automações do GitHub: mover uma tarefa entr
 - O sistema cria um único board padrão ao criar o projeto. Ele inicia com o nome `Main Board`, mas esse é apenas o nome inicial: pode ser renomeado sem perder o indicador de board padrão.
 - Marcar um board como padrão desmarca o anterior; a existência de um board padrão não depende de seu nome.
 - Cada board pode ter no máximo um repositório GitHub vinculado.
-- Um repositório GitHub pode estar vinculado a no máximo um board em todo o devBoard. A unicidade usa o identificador imutável do repositório no GitHub, não seu nome ou URL.
+- Um repositório GitHub pode estar vinculado a no máximo um **board ativo** em todo o devBoard. A unicidade usa o identificador imutável do repositório no GitHub, não seu nome ou URL. Boards arquivados mantêm os metadados históricos sem reservar o repositório.
 - Ao vincular um repositório, o sistema valida que o usuário autenticado possui acesso de escrita a ele.
 - Dados de repositório, branches e sincronização não pertencem ao projeto nem podem ser compartilhados automaticamente com outro board.
 
@@ -121,7 +123,7 @@ Todos exigem autenticação e vínculo com o projeto do board, salvo indicação
 
 ### 4.2 Listar boards — `GET /api/projects/{projectId}/boards`
 
-**Saída (200)**: boards do projeto com suas colunas, contagem de tarefas por coluna e resumo do vínculo GitHub, **sem** as tarefas em si.
+**Saída (200)**: somente boards ativos do projeto com suas colunas, contagem de tarefas por coluna e resumo do vínculo GitHub, **sem** as tarefas em si. Detalhe do projeto, contadores, destinos de vínculo e seletores também excluem arquivados.
 
 ---
 
@@ -273,6 +275,38 @@ Todos exigem autenticação e vínculo com o projeto do board, salvo indicação
 
 ---
 
+### 4.14 Arquivar board — `POST /api/boards/{boardId}/archive`
+
+**Permissão**: dono ou `ADMIN`, via PermissionService. Sem vínculo retorna 404; papel insuficiente retorna 403.
+
+**Saída**: 204. Repetir o arquivamento não duplica efeitos.
+
+**Comportamento**: após confirmação explícita na interface, marca o board como arquivado e registra a data, em transação. Não apaga board, colunas, tarefas, comentários, atividades, mapeamentos de labels nem referências históricas de issues/PRs/branches. Não altera o estado de arquivamento de projetos ou tarefas.
+
+O board padrão, mesmo renomeado, e qualquer board chamado `Main Board` (sem diferença de maiúsculas) não podem ser arquivados: 409. Não é possível arquivar em projeto já arquivado.
+
+O repositório deixa de ser reservado imediatamente após o commit e pode ser vinculado a outro board ativo, inclusive ao Main Board. A remoção do webhook é publicada após commit e executada no pool GitHub, com as tentativas atuais para falhas transitórias. Falhas externas não desfazem o arquivamento. Remoções atrasadas verificam se o repositório está em uso por outro board ativo e preservam o webhook em uso. Operações externas do mesmo repositório são serializadas.
+
+Webhooks ignoram boards arquivados na recepção e verificam novamente o estado no processamento. Jobs pendentes de importação, sincronização e escrita não executam em board arquivado. Uma geração interna do vínculo é incrementada no arquivamento, restauração, vínculo e desvínculo; entregas e jobs carregam esse número e são descartados se pertencerem a uma geração anterior, inclusive após restaurar o mesmo board.
+
+### 4.15 Consultar arquivados — `GET /api/projects/{projectId}/boards/archived`
+
+**Permissão**: dono ou `ADMIN`. Paginação `page=0`, `size=20`, máximo 100, ordenação por arquivamento decrescente. Retorna PageResponse de metadados de boards, incluindo `archived` e `archivedAt`, sem tarefas nem colunas.
+
+O detalhe do projeto oferece “Ver boards arquivados”, com paginação e ação de restaurar. Uma URL direta de board arquivado devolve apenas metadados (colunas vazias), permitindo mostrar “Board arquivado”, informar que os dados foram preservados e oferecer “Ver boards ativos do projeto”. Não renderiza Kanban nem controles de alteração. O mesmo comportamento vale para configurações. Leitura normal de tarefas, comentários e atividades e qualquer alteração de board/coluna/tarefa são bloqueadas com 409 após validar o vínculo do usuário. Indicadores e atividades do dashboard excluem esses boards.
+
+### 4.16 Restaurar board — `POST /api/boards/{boardId}/restore`
+
+**Permissão**: dono ou `ADMIN`. Retorna 200 com metadados. Repetir em board ativo não duplica efeitos. Projeto arquivado impede restauração com 409.
+
+Se o repositório histórico já estiver vinculado a outro board ativo, retorna 409 com mensagem orientando a desvinculá-lo antes de restaurar. A operação é atômica: o board permanece arquivado, sem perder referências. Não toma o repositório do outro board. O índice único de repositórios ativos também protege vínculos e restaurações concorrentes.
+
+Sem conflito, reativa o mesmo board, limpa a data de arquivamento, preserva todos os dados e agenda o registro do webhook e a sincronização. Caso o token GitHub precise ser renovado, o fluxo existente marca reautenticação sem desfazer a restauração local.
+
+Para TCC: confirmar “Arquivar board” no Backend, mantendo Main Board ativo. Se necessário, vincular o repositório liberado nas configurações do Main Board.
+
+---
+
 ## 5. FLUXOS
 
 ### 5.1 Nascimento e renomeação do board padrão
@@ -312,6 +346,7 @@ O nome pode ser alterado por dono ou `ADMIN`. Mesmo renomeado, ele continua send
 |---|:---:|:---:|:---:|:---:|
 | Visualizar board | ✅ | ✅ | ✅ | ✅ |
 | Criar / editar / excluir board | ✅ | ✅ | ❌ | ❌ |
+| Arquivar / consultar arquivados / restaurar board | ✅ | ✅ | ❌ | ❌ |
 | Criar / editar / excluir coluna | ✅ | ✅ | ❌ | ❌ |
 | Reordenar colunas | ✅ | ✅ | ✅ | ❌ |
 | Vincular / desvincular repositório | ✅ | ✅ | ❌ | ❌ |
@@ -341,6 +376,18 @@ O nome pode ser alterado por dono ou `ADMIN`. Mesmo renomeado, ele continua send
 - [ ] Excluir o último board do projeto é rejeitado
 - [ ] Reordenação exige a lista completa e resulta em posições sem lacunas
 - [ ] Limite WIP bloqueia movimentação manual e permite movimentação automática com alerta
+- [ ] Arquivar Backend deixa Main Board como único board ativo quando estes são os dois boards do projeto
+- [ ] Main Board e board padrão renomeado não podem ser arquivados
+- [ ] Dono e ADMIN arquivam/restauram; Developer e Viewer recebem 403; sem vínculo recebe 404
+- [ ] Arquivar/restaurar preserva IDs, tarefas, comentários, atividades, labels e referências GitHub
+- [ ] Boards arquivados somem de listas, contadores, seletores, destinos de vínculo e dashboard
+- [ ] URL direta de arquivado informa o estado e oferece retorno ao projeto, sem expor tarefas
+- [ ] Operações em tarefas/colunas/comentários/atividades de board arquivado são bloqueadas
+- [ ] Lista paginada de arquivados permite restaurar o mesmo board com seus dados
+- [ ] Confirmação cancelada na interface não arquiva
+- [ ] Repositório de arquivado pode ser vinculado ao Main Board; restauração com conflito retorna 409 e preserva o arquivado
+- [ ] Webhooks e jobs pendentes ignoram arquivados; remoção atrasada não remove hook de vínculo ativo
+- [ ] Falha externa assíncrona não desfaz arquivamento/restauração
 
 ---
 

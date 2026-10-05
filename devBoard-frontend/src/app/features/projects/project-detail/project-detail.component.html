@@ -1,7 +1,7 @@
 <div class="page">
   <div class="page-container">
 
-    <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+    <a routerLink="/projects/list" class="back-link">&larr; Voltar para projetos</a>
 
     <div class="loading-state" *ngIf="isLoading">Carregando...</div>
 
@@ -24,12 +24,29 @@
       <div class="detail-grid">
         <div class="card">
           <h2 class="card-heading">Quadros do projeto</h2><p class="card-intro">Escolha um quadro para acompanhar o trabalho.</p>
-          <a class="member-row board-link" *ngFor="let board of project.boards" [routerLink]="['/boards', board.id]">
-            <div class="member-info">
+          <p class="alert alert-error" role="alert" *ngIf="boardError">{{ boardError }}</p>
+          <p role="status" *ngIf="boardMessage">{{ boardMessage }}</p>
+          <div class="member-row board-row" *ngFor="let board of project.boards">
+            <a class="member-info board-link" [routerLink]="['/boards', board.id]">
               <span>{{ board.name }}</span><span class="pill pill-muted" *ngIf="board.githubLinked">GitHub</span>
               <span class="pill pill-muted" *ngIf="board.defaultBoard">Padrão</span>
-            </div>
-          </a>
+            </a>
+            <button class="btn-secondary board-archive" type="button" *ngIf="canArchiveBoard(board)" [disabled]="boardBusyId !== null" [attr.aria-label]="'Arquivar board ' + board.name" (click)="archiveBoard(board)">{{ boardBusyId === board.id ? 'Arquivando…' : 'Arquivar board' }}</button>
+          </div>
+          <button class="btn-secondary archived-toggle" type="button" *ngIf="canEdit" [attr.aria-expanded]="showArchivedBoards" aria-controls="archived-boards" (click)="toggleArchivedBoards()">{{ showArchivedBoards ? 'Ocultar arquivados' : 'Ver boards arquivados' }}</button>
+          <section id="archived-boards" *ngIf="showArchivedBoards && canEdit" aria-labelledby="archived-boards-title">
+            <h3 id="archived-boards-title">Boards arquivados</h3>
+            <p>Tarefas e atividades estão preservadas. Restaure um board para acessá-las.</p>
+            <p role="status" *ngIf="archivedLoading">Carregando boards arquivados…</p>
+            <p *ngIf="!archivedLoading && !archivedBoards.length">Nenhum board arquivado.</p>
+            <article class="member-row board-row" *ngFor="let board of archivedBoards">
+              <div><strong>{{ board.name }}</strong><p *ngIf="board.archivedAt">Arquivado em {{ board.archivedAt | date:'dd/MM/yyyy HH:mm' }}</p><small *ngIf="board.githubRepoName">Repositório preservado: {{ board.githubRepoOwner }}/{{ board.githubRepoName }}</small></div>
+              <button type="button" class="btn-secondary board-restore" [disabled]="boardBusyId !== null" [attr.aria-label]="'Restaurar board ' + board.name" (click)="restoreBoard(board)">{{ boardBusyId === board.id ? 'Restaurando…' : 'Restaurar' }}</button>
+            </article>
+            <nav class="pagination" *ngIf="archivedPages > 1" aria-label="Paginação de boards arquivados">
+              <button class="btn-secondary" type="button" [disabled]="archivedLoading || archivedPage === 0" (click)="loadArchivedBoards(archivedPage - 1)">Anterior</button><span aria-live="polite">{{ archivedPage + 1 }} / {{ archivedPages }}</span><button class="btn-secondary" type="button" [disabled]="archivedLoading || archivedPage + 1 >= archivedPages" (click)="loadArchivedBoards(archivedPage + 1)">Próxima</button>
+            </nav>
+          </section>
           <form class="board-create-form" *ngIf="canEdit" [formGroup]="boardForm" (ngSubmit)="createBoard()" novalidate>
             <div class="field-row">
               <div class="field">

@@ -23,19 +23,25 @@ public class GithubJobService {
     private final GithubEventProcessor processor;
     private final GithubLoopService loops;
     private final ApplicationEventPublisher events;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Value("${github.webhook-url:http://localhost:8080/webhook/github}") private String webhookUrl;
     @Value("${github.webhook-secret:}") private String webhookSecret;
 
     @Transactional
     public void execute(GithubJobEvent job) {
+        // Serialize external hook operations for the same repository, including delayed removals.
+        jdbc.queryForList("SELECT pg_advisory_xact_lock(?)", job.repositoryId());
         User actor = users.findById(job.userId()).orElseThrow(() -> new UnauthorizedException("Usuário GitHub indisponível"));
         String token = actor.getGithubToken();
         if (token == null) throw new UnauthorizedException("GitHub não conectado");
         if (job.operation().equals("REMOVE")) {
+            if (boards.findByGithubRepoIdAndArchivedFalse(job.repositoryId())
+                    .filter(active -> !Boolean.TRUE.equals(active.getProject().getArchived())).isPresent()) return;
             client.removeHook(token, job.repositoryId(), job.hookId(), webhookUrl); return;
         }
         Board b = boards.findLockedById(job.boardId()).orElse(null);
-        if (b == null || !Objects.equals(b.getGithubRepoId(), job.repositoryId()) || Boolean.TRUE.equals(b.getProject().getArchived())) return;
+        if (b == null || Boolean.TRUE.equals(b.getArchived()) || b.getGithubGeneration() != job.generation()
+                || !Objects.equals(b.getGithubRepoId(), job.repositoryId()) || Boolean.TRUE.equals(b.getProject().getArchived())) return;
         if (job.operation().equals("LINK")) {
             if (webhookSecret.isBlank()) throw new InvalidRequestException("Segredo do webhook não configurado");
             b.setGithubHookId(client.registerHook(token, job.repositoryId(), webhookUrl, webhookSecret));
@@ -89,7 +95,8 @@ public class GithubJobService {
         }
     }
     @Transactional
-    public void requireReauthentication(Long boardId, Long repositoryId) {
-        boards.findById(boardId).filter(b -> Objects.equals(b.getGithubRepoId(), repositoryId)).ifPresent(b -> b.setGithubReauthRequired(true));
+    public void requireReauthentication(Long boardId, Long repositoryId, long generation) {
+        boards.findById(boardId).filter(b -> !Boolean.TRUE.equals(b.getArchived()) && b.getGithubGeneration() == generation
+                && Objects.equals(b.getGithubRepoId(), repositoryId)).ifPresent(b -> b.setGithubReauthRequired(true));
     }
 }

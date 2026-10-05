@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
+    @Query("select count(distinct p.id) from Project p left join ProjectMember pm on pm.project = p and pm.user.id = :userId where p.archived = false and (p.owner.id = :userId or pm.id is not null)")
+    long countAccessibleActive(@Param("userId") Long userId);
+
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Project p where p.id = :id")
     java.util.Optional<Project> findLockedById(@Param("id") Long id);

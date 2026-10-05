@@ -16,7 +16,7 @@ public class GithubEventListener {
         for (int attempt = 1; attempt <= 3; attempt++) {
             try { jobs.execute(event); return; }
             catch (UnauthorizedException e) {
-                try { jobs.requireReauthentication(event.boardId(), event.repositoryId()); }
+                try { jobs.requireReauthentication(event.boardId(), event.repositoryId(), event.generation()); }
                 catch (Exception ignored) { log.error("Falha ao marcar reautenticação: boardId={}", event.boardId()); }
                 log.warn("GitHub requer reautenticação: boardId={}", event.boardId()); return;
             } catch (ExternalServiceException | RateLimitExceededException e) {

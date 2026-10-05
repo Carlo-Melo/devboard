@@ -1,5 +1,5 @@
 <main class="page"><div class="page-container">
-  <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+  <a routerLink="/projects/list" class="back-link">&larr; Voltar para projetos</a>
   <p *ngIf="isLoading">Carregando membros...</p>
   <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
   <div class="alert alert-success" *ngIf="successMessage">{{ successMessage }}</div>

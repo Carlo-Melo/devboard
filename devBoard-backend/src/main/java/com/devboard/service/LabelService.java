@@ -46,7 +46,7 @@ public class LabelService {
         mappings.deleteByLabelId(id); labels.delete(l);
     }
     @Transactional public List<LabelResponse> apply(Long taskId, List<Long> ids, Long userId) {
-        Task t = task(taskId); permissions.requireTaskEditable(t, userId);
+        Task t = task(taskId); permissions.requireTaskEditable(t, userId); permissions.requireActiveBoard(t.getColumn().getBoard());
         for (Long id : ids) {
             Label l = label(id);
             if (!l.getProject().getId().equals(t.resolveProjectId())) throw new InvalidRequestException("Label pertence a outro projeto");
@@ -55,15 +55,15 @@ public class LabelService {
         queue(t, userId); return t.getLabels().stream().map(LabelMapper::response).toList();
     }
     @Transactional public void remove(Long taskId, Long labelId, Long userId) {
-        Task t = task(taskId); permissions.requireTaskEditable(t, userId);
+        Task t = task(taskId); permissions.requireTaskEditable(t, userId); permissions.requireActiveBoard(t.getColumn().getBoard());
         t.getLabels().removeIf(l -> l.getId().equals(labelId)); queue(t, userId);
     }
     private void queue(Task t, Long userId) {
         events.publishEvent(new TaskActivityEvent(t, userId, TaskActivityType.LABELS_CHANGED, "Labels atualizadas"));
         Board b = t.getColumn().getBoard();
-        if (b.hasGithubRepo() && t.getGithubIssueId() != null)
+        if (!Boolean.TRUE.equals(b.getArchived()) && b.hasGithubRepo() && t.getGithubIssueId() != null)
             events.publishEvent(new GithubJobEvent("LABELS", b.getId(), b.getGithubRepoId(),
-                    b.getGithubUser() == null ? b.getProject().getOwner().getId() : b.getGithubUser().getId(), null, t.getId(), null));
+                    b.getGithubUser() == null ? b.getProject().getOwner().getId() : b.getGithubUser().getId(), null, t.getId(), null, b.getGithubGeneration()));
     }
     private void unique(Long projectId, String name, Long id) {
         labels.findByProjectIdAndNameIgnoreCase(projectId, name).filter(l -> !Objects.equals(l.getId(), id)).ifPresent(l -> { throw new ConflictException("Nome de label já existe"); });

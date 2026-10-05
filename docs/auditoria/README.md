@@ -11,7 +11,7 @@ Este diretório mantém a auditoria técnica reproduzível do projeto. Ela compa
 - `COMO-EXECUTAR-PROFESSOR.md`: roteiro curto para abrir e regenerar a auditoria.
 - `README.md`: orientação de manutenção deste material.
 
-O PDF de entrega atual é exportado para `output/pdf/auditoria-devboard-v1.1.1.pdf` e corresponde ao mesmo conteúdo do HTML.
+O PDF de entrega atual é exportado localmente para `output/pdf/auditoria-devboard-v1.1.1.pdf` e corresponde ao mesmo conteúdo do HTML. A pasta `output/` é ignorada pelo Git: o HTML e seus geradores são a documentação versionada, e os PDFs são arquivos de exportação local.
 
 ## Como regenerar
 

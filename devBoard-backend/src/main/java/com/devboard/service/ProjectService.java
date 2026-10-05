@@ -76,7 +76,7 @@ public class ProjectService {
 
         return PageResponse.from(projects, project ->
                 projectMapper.toSummary(project, projectMemberRepository.countByProjectId(project.getId()),
-                        boardRepository.countByProjectId(project.getId()), boardRepository.countByProjectIdAndGithubRepoIdIsNotNull(project.getId())));
+                        boardRepository.countByProjectIdAndArchivedFalse(project.getId()), boardRepository.countByProjectIdAndArchivedFalseAndGithubRepoIdIsNotNull(project.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -117,7 +117,7 @@ public class ProjectService {
 
     private ProjectResponse toDetailResponse(Project project, ProjectRole currentUserRole, boolean currentUserOwner) {
         List<ProjectMember> members = projectMemberRepository.findByProjectId(project.getId());
-        List<Board> boards = boardRepository.findByProjectId(project.getId());
+        List<Board> boards = boardRepository.findByProjectIdAndArchivedFalse(project.getId());
         return projectMapper.toResponse(project, currentUserRole, currentUserOwner, members, boards);
     }
 

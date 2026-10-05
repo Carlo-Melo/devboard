@@ -12,6 +12,7 @@ import {
 } from '../models/board.models';
 import { TaskPriority, TaskType } from '../models/task.models';
 import { environment } from '../../../environments/environment';
+import { PageResponse } from '../models/page-response.model';
 
 export interface BoardViewFilters {
   assigneeId?: number;
@@ -58,6 +59,19 @@ export class BoardService {
 
   delete(boardId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/boards/${boardId}`);
+  }
+
+  archive(boardId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/boards/${boardId}/archive`, {});
+  }
+
+  restore(boardId: number): Observable<BoardResponse> {
+    return this.http.post<BoardResponse>(`${this.apiUrl}/boards/${boardId}/restore`, {});
+  }
+
+  listArchived(projectId: number, page = 0, size = 20): Observable<PageResponse<BoardResponse>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PageResponse<BoardResponse>>(`${this.apiUrl}/projects/${projectId}/boards/archived`, { params });
   }
 
   createColumn(boardId: number, request: CreateColumnRequest): Observable<BoardColumnResponse> {

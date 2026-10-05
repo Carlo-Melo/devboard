@@ -9,7 +9,7 @@ Este guia permite consultar e regenerar a auditoria sem instalar as dependência
 3. Use o menu lateral para navegar pelo checklist, problemas, testes e atlas de arquivos.
 4. Use o botão **Tema** para alternar entre o tema claro e o escuro.
 
-O PDF pronto está em `output/pdf/auditoria-devboard-v1.1.1.pdf`.
+Para obter um PDF, abra o HTML e use a opção **Imprimir → Salvar como PDF** do navegador. Salve em `output/pdf/auditoria-devboard-v1.1.1.pdf`. A pasta `output/` contém exportações locais e é ignorada pelo Git.
 
 ## Abrir por servidor local
 

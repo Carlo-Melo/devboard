@@ -3,7 +3,7 @@
 
     <div class="loading-state" *ngIf="isLoading">Carregando tarefa...</div>
 
-    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+    <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }} <a *ngIf="!task" routerLink="/projects/list">Ver meus projetos</a></div>
 
     <ng-container *ngIf="task && !isLoading">
       <a [routerLink]="['/boards', task.boardId]" class="back-link">&larr; Voltar ao quadro</a>

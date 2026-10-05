@@ -1,0 +1,13 @@
+import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { GithubRepoResponse } from '../../../core/models/github.models';
+
+@Component({ selector: 'app-repository-card', standalone: true, imports: [CommonModule], template: `
+<article class="repo-card" [class.compact]="compact">
+  <div class="repo-top"><span class="repo-icon" aria-hidden="true">⑂</span><a class="repo-name" [href]="repo.url" target="_blank" rel="noopener noreferrer">{{ repo.fullName }} <span aria-hidden="true">↗</span></a><span class="private" *ngIf="repo.privateRepository">Privado</span><span class="linked" *ngIf="repo.linked">Já vinculado</span></div>
+  <p class="repo-description">{{ repo.description || 'Repositório sem descrição.' }}</p>
+  <div class="repo-footer"><span>Branch padrão: <strong>{{ repo.defaultBranch || 'não definida' }}</strong></span><button *ngIf="!repo.linked" class="btn-link" type="button" (click)="link.emit($event)">Vincular a um quadro</button></div>
+</article>`, styles: [`
+:host{display:block;min-width:0}.repo-card{height:100%;padding:18px;border:1px solid #2b3934;border-radius:14px;background:#17201d;display:flex;flex-direction:column;min-width:0}.repo-top{display:flex;align-items:center;gap:10px;min-width:0}.repo-icon{color:#78d8bd;font-size:1.15rem}.repo-name{font-weight:650;color:#e5eee9;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.repo-name:hover{text-decoration:underline;color:#8be0c6}.private,.linked{flex:none;padding:5px 8px;border-radius:999px;font-size:.7rem}.private{background:#322a3f;color:#d5c0f3}.linked{margin-left:auto;background:#243a32;color:#85d9bc}.repo-description{color:#9aaba3;font-size:.84rem;line-height:1.5;min-height:2.5em;overflow-wrap:anywhere}.repo-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #293731;color:#82958c;font-size:.75rem}.repo-footer strong{color:#c5d2cb}.btn-link{border:0;background:none;color:#84ddc1;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}.btn-link:focus-visible,.repo-name:focus-visible{outline:2px solid #78d8bd;outline-offset:3px;border-radius:4px}.compact{padding:14px}.compact .repo-description{margin:10px 0;min-height:2.3em}.compact .repo-footer{font-size:.7rem}@media(max-width:480px){.repo-card{padding:14px}.repo-footer{align-items:flex-start;flex-direction:column}.private,.linked{font-size:.65rem}}`]
+})
+export class RepositoryCardComponent { @Input({required:true}) repo!: GithubRepoResponse; @Input() compact=false; @Output() link=new EventEmitter<MouseEvent>(); }

@@ -15,6 +15,6 @@ export class AppComponent {
   title = 'devBoard-frontend';
   constructor(public router: Router) {}
   get isWorkspace(): boolean {
-    return /^\/(projects|boards|tasks)(\/|\?|$)/.test(this.router.url);
+    return /^\/(projects|boards|tasks|repositories)(\/|\?|$)/.test(this.router.url);
   }
 }

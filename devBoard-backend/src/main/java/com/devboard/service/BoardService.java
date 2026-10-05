@@ -106,7 +106,7 @@ public class BoardService {
     public List<BoardResponse> listBoards(Long projectId, Long userId) {
         permissionService.requireRole(projectId, userId, ProjectRole.VIEWER);
 
-        List<Board> boards = boardRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
+        List<Board> boards = boardRepository.findByProjectIdAndArchivedFalseOrderByCreatedAtAsc(projectId);
         Map<Long, List<BoardColumn>> columnsByBoard = new HashMap<>();
         List<Long> allColumnIds = new ArrayList<>();
         for (Board board : boards) {
@@ -142,6 +142,10 @@ public class BoardService {
                                        TaskType type, String search) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.VIEWER);
+
+        // A direct URL exposes only board metadata, never archived tasks or columns.
+        if (Boolean.TRUE.equals(board.getArchived())) return boardMapper.toResponse(board, List.of());
+        permissionService.requireActiveBoard(board);
 
         List<BoardColumn> columns = boardColumnRepository.findByBoardIdOrderByPositionAsc(boardId);
         List<Long> columnIds = columns.stream().map(BoardColumn::getId).toList();
@@ -193,6 +197,7 @@ public class BoardService {
     public BoardResponse updateBoard(Long boardId, UpdateBoardRequest request, Long userId) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(board);
 
         projectRepository.findLockedById(board.getProject().getId());
         if (boardRepository.existsByProjectIdAndNameAndIdNot(board.getProject().getId(), request.getName(), boardId))
@@ -215,16 +220,17 @@ public class BoardService {
     public void deleteBoard(Long boardId, Long userId) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(board);
 
         projectRepository.findLockedById(board.getProject().getId());
-        if (boardRepository.countByProjectId(board.getProject().getId()) <= 1) {
+        if (boardRepository.countByProjectIdAndArchivedFalse(board.getProject().getId()) <= 1) {
             throw new ConflictException("Não é possível excluir o único quadro do projeto");
         }
 
         if (taskRepository.existsByColumnBoardId(boardId)) {
             throw new ConflictException("Quadro possui tarefas; mova ou arquive as tarefas antes de excluir");
         }
-        Board replacement = boardRepository.findByProjectIdOrderByCreatedAtAsc(board.getProject().getId()).stream()
+        Board replacement = boardRepository.findByProjectIdAndArchivedFalseOrderByCreatedAtAsc(board.getProject().getId()).stream()
                 .filter(b -> !b.getId().equals(boardId)).findFirst().orElseThrow();
         githubService.removeBoardHook(boardId);
         if (Boolean.TRUE.equals(board.getIsDefault())) {
@@ -237,9 +243,55 @@ public class BoardService {
     }
 
     @Transactional
+    public void archiveBoard(Long boardId, Long userId) {
+        Board board = boardRepository.findLockedById(boardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quadro não encontrado"));
+        permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        projectRepository.findLockedById(board.getProject().getId());
+        if (Boolean.TRUE.equals(board.getIsDefault()) || "Main Board".equalsIgnoreCase(board.getName().trim())) {
+            throw new ConflictException("Não é possível arquivar o Main Board ou o board padrão do projeto");
+        }
+        if (Boolean.TRUE.equals(board.getArchived())) return;
+        permissionService.requireActiveBoard(board);
+        githubService.suspendBoard(boardId);
+        board.setArchived(true);
+        board.setArchivedAt(java.time.LocalDateTime.now());
+        boardRepository.saveAndFlush(board);
+    }
+
+    @Transactional
+    public BoardResponse restoreBoard(Long boardId, Long userId) {
+        Board board = boardRepository.findLockedById(boardId)
+                .orElseThrow(() -> new ResourceNotFoundException("Quadro não encontrado"));
+        permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        projectRepository.findLockedById(board.getProject().getId());
+        if (Boolean.TRUE.equals(board.getProject().getArchived())) throw new ConflictException("Projeto arquivado");
+        if (!Boolean.TRUE.equals(board.getArchived())) return boardMapper.toResponse(board, List.of());
+        if (board.hasGithubRepo() && boardRepository.existsByGithubRepoIdAndArchivedFalse(board.getGithubRepoId())) {
+            throw new ConflictException("Repositório já vinculado a outro board ativo. Desvincule-o do outro board antes de restaurar este.");
+        }
+        board.setArchived(false);
+        board.setArchivedAt(null);
+        board.setGithubGeneration(board.getGithubGeneration() + 1);
+        boardRepository.saveAndFlush(board); // partial unique index arbitrates simultaneous restores/links
+        githubService.resumeBoard(boardId, userId);
+        return boardMapper.toResponse(board, List.of());
+    }
+
+    @Transactional(readOnly = true)
+    public com.devboard.dto.common.PageResponse<BoardResponse> listArchivedBoards(Long projectId, Long userId, int page, int size) {
+        permissionService.requireRole(projectId, userId, ProjectRole.ADMIN);
+        var result = boardRepository.findByProjectIdAndArchivedTrue(projectId,
+                org.springframework.data.domain.PageRequest.of(Math.max(0, page), Math.max(1, Math.min(100, size)),
+                        org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "archivedAt")));
+        return com.devboard.dto.common.PageResponse.from(result, board -> boardMapper.toResponse(board, List.of()));
+    }
+
+    @Transactional
     public BoardColumnResponse createColumn(Long boardId, CreateColumnRequest request, Long userId) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(board);
 
         if (boardColumnRepository.existsByBoardIdAndName(boardId, request.getName())) {
             throw new ConflictException("Já existe uma coluna com esse nome neste quadro");
@@ -274,6 +326,7 @@ public class BoardService {
         BoardColumn column = findColumnOrThrow(columnId);
         Long boardId = column.getBoard().getId();
         permissionService.requireRole(column.getBoard().getProject().getId(), userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(column.getBoard());
 
         if (!column.getName().equals(request.getName())
                 && boardColumnRepository.existsByBoardIdAndNameAndIdNot(boardId, request.getName(), columnId)) {
@@ -299,6 +352,7 @@ public class BoardService {
         BoardColumn column = findColumnOrThrow(columnId);
         Board board = column.getBoard();
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(board);
 
         if (boardColumnRepository.countByBoardId(board.getId()) <= 1) {
             throw new ConflictException("Não é possível excluir a última coluna do quadro");
@@ -334,6 +388,7 @@ public class BoardService {
     public List<BoardColumnResponse> reorderColumns(Long boardId, ReorderColumnsRequest request, Long userId) {
         Board board = findBoardOrThrow(boardId);
         permissionService.requireRole(board.getProject().getId(), userId, ProjectRole.DEVELOPER);
+        permissionService.requireActiveBoard(board);
 
         List<BoardColumn> existing = boardColumnRepository.findByBoardIdOrderByPositionAsc(boardId);
         Set<Long> existingIds = new HashSet<>();

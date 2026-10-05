@@ -66,6 +66,7 @@ public class ActivityService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada"));
         permissionService.requireRole(task.resolveProjectId(), userId, ProjectRole.VIEWER);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         int clampedSize = Math.min(size, MAX_PAGE_SIZE) <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), clampedSize, Sort.by(Sort.Direction.DESC, "createdAt"));

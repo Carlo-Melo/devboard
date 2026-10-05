@@ -147,7 +147,7 @@ export class MemberListComponent implements OnInit {
   leave(): void {
     if (!this.project || !confirm('Sair deste projeto?')) return;
     this.memberService.leave(this.project.id).subscribe({
-      next: () => this.router.navigateByUrl('/projects'),
+      next: () => this.router.navigateByUrl('/projects/list'),
       error: (error: ApiError) => this.errorMessage = error.message
     });
   }

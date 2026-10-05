@@ -33,11 +33,11 @@ class BoardGithubServiceTest {
         lenient().when(users.findById(1L)).thenReturn(Optional.of(user));
     }
     @Test void link_devePersistirNoBoardEAgendarWebhook() {
-        when(client.repository("fake-test-token",30)).thenReturn(new GithubRepositoryClient.RepositoryData(30,"org","repo","org/repo",null,"https://github.com/org/repo","develop",true));
+        when(client.repository("fake-test-token",30)).thenReturn(new GithubRepositoryClient.RepositoryData(30,"org","repo","org/repo",null,"https://github.com/org/repo","develop",true,false));
         service.link(20L,request,1L);
         assertThat(board.getGithubRepoId()).isEqualTo(30L); assertThat(board.getDefaultBaseBranch()).isEqualTo("develop");
         verify(permissions).requireRole(10L,1L,ProjectRole.ADMIN);
-        verify(events).publishEvent(new GithubJobEvent("LINK",20L,30L,1L,null,null,null));
+        verify(events).publishEvent(new GithubJobEvent("LINK",20L,30L,1L,null,null,null,1));
     }
     @Test void link_deveRejeitarSegundoRepositorioNoBoard() {
         board.setGithubRepoId(99L);
@@ -45,12 +45,12 @@ class BoardGithubServiceTest {
         verifyNoInteractions(client);
     }
     @Test void link_deveRejeitarRepositorioJaVinculadoGlobalmente() {
-        when(boards.existsByGithubRepoId(30L)).thenReturn(true);
+        when(boards.existsByGithubRepoIdAndArchivedFalse(30L)).thenReturn(true);
         assertThatThrownBy(() -> service.link(20L,request,1L)).isInstanceOf(ConflictException.class);
         verifyNoInteractions(client);
     }
     @Test void link_deveRejeitarRepositorioSemEscrita() {
-        when(client.repository("fake-test-token",30)).thenReturn(new GithubRepositoryClient.RepositoryData(30,"org","repo","org/repo",null,"url","main",false));
+        when(client.repository("fake-test-token",30)).thenReturn(new GithubRepositoryClient.RepositoryData(30,"org","repo","org/repo",null,"url","main",false,false));
         assertThatThrownBy(() -> service.link(20L,request,1L)).isInstanceOf(AccessDeniedException.class);
         verifyNoInteractions(events);
     }
@@ -74,5 +74,35 @@ class BoardGithubServiceTest {
     @Test void settings_devePermitirBoardLocal() {
         when(boards.findById(20L)).thenReturn(Optional.of(board));
         service.settings(20L,1L); verify(permissions).requireRole(10L,1L,ProjectRole.VIEWER);
+    }
+    @Test void publicRepositories_deveIncluirSomenteRepositorioPublicoDoProprioUsuarioEConsultarVinculoEmLote() {
+        var owned = new GithubRepositoryClient.RepositoryData(31,"joao_dev","devBoard","joao_dev/devBoard",null,"url","main",true,false);
+        var privateRepo = new GithubRepositoryClient.RepositoryData(32,"joao_dev","secret","joao_dev/secret",null,"url","main",true,true);
+        var organization = new GithubRepositoryClient.RepositoryData(33,"senai","devBoard","senai/devBoard",null,"url","main",true,false);
+        when(client.authenticatedLogin("fake-test-token")).thenReturn("joao_dev");
+        when(client.repositories("fake-test-token")).thenReturn(List.of(owned,privateRepo,organization));
+        when(boards.findLinkedGithubRepoIds(List.of(31L))).thenReturn(List.of(31L));
+        when(mapper.repository(owned,true)).thenReturn(new GithubRepoResponse(31,"joao_dev/devBoard",null,"url","main",true,false));
+        var result=service.publicRepositories(1L,"DEV",0,20);
+        assertThat(result.getContent()).containsExactly(new GithubRepoResponse(31,"joao_dev/devBoard",null,"url","main",true,false));
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        verify(boards).findLinkedGithubRepoIds(List.of(31L));
+        verify(boards,never()).existsByGithubRepoId(any());
+    }
+    @Test void availableRepositories_deveIncluirRepositoriosPrivadosEDeOrganizacoesComEscrita() {
+        var owned = new GithubRepositoryClient.RepositoryData(31,"joao_dev","devBoard","joao_dev/devBoard",null,"url","main",true,false);
+        var privateRepo = new GithubRepositoryClient.RepositoryData(32,"joao_dev","secret","joao_dev/secret",null,"url","main",true,true);
+        var organization = new GithubRepositoryClient.RepositoryData(33,"senai","tcc","senai/tcc",null,"url","main",true,true);
+        when(client.repositories("fake-test-token")).thenReturn(List.of(owned,privateRepo,organization));
+        when(boards.findLinkedGithubRepoIds(List.of(31L,32L,33L))).thenReturn(List.of(32L));
+        when(mapper.repository(owned,false)).thenReturn(new GithubRepoResponse(31,"joao_dev/devBoard",null,"url","main",false,false));
+        when(mapper.repository(privateRepo,true)).thenReturn(new GithubRepoResponse(32,"joao_dev/secret",null,"url","main",true,true));
+        when(mapper.repository(organization,false)).thenReturn(new GithubRepoResponse(33,"senai/tcc",null,"url","main",false,true));
+        var result = service.availableRepositories(1L,"",0,20);
+        assertThat(result.getContent()).containsExactly(
+                new GithubRepoResponse(31,"joao_dev/devBoard",null,"url","main",false,false),
+                new GithubRepoResponse(32,"joao_dev/secret",null,"url","main",true,true),
+                new GithubRepoResponse(33,"senai/tcc",null,"url","main",false,true));
+        verify(client, never()).authenticatedLogin(anyString());
     }
 }

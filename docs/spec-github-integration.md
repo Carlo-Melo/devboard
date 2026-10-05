@@ -46,7 +46,7 @@ O registro acontece automaticamente quando um repositório é vinculado a um boa
 
 **Eventos assinados**: `push`, `pull_request`, `issues`
 
-Ao desvincular o repositório, excluir o board ou arquivar o projeto que o contém, o webhook é removido. A chamada externa é assíncrona: falhas são registradas e não desfazem a operação local que a originou.
+Ao desvincular o repositório, excluir ou arquivar o board ou arquivar o projeto que o contém, o webhook é removido. A chamada externa é assíncrona: falhas são registradas e não desfazem a operação local que a originou. Arquivar preserva referências históricas e libera o repositório para outro board ativo; restaurar valida conflito e agenda o registro do webhook. Remoções atrasadas preservam hooks usados por um vínculo ativo, conforme spec-board-kanban 4.14–4.16.
 
 ### 3.2 Endpoint de recebimento — `POST /webhook/github`
 
@@ -54,7 +54,7 @@ Endpoint público (não exige JWT), protegido pela assinatura do GitHub.
 
 **Comportamento**
 1. Valida a assinatura da requisição contra o segredo configurado. Assinatura inválida → 401, sem processar nada.
-2. Identifica o **board** pelo identificador do repositório informado no payload. Sem board correspondente, ou com projeto arquivado → 202, evento descartado.
+2. Identifica o **board ativo** pelo identificador do repositório informado no payload. Sem board ativo correspondente, ou com projeto arquivado → 202, evento descartado. O processamento assíncrono revalida o board e o vínculo antes de alterar tarefas.
 3. Registra a entrega para garantir idempotência e enfileira o evento para processamento assíncrono.
 4. Responde 202 imediatamente.
 
