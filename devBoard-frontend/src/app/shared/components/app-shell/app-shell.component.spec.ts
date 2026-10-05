@@ -41,4 +41,32 @@ describe('AppShellComponent', () => {
     expect(createProjectLink).toBeTruthy();
     expect(createProjectLink?.getAttribute('href')).toContain('/projects/new');
   });
+
+  it('shows the sidebar destinations in the requested order', () => {
+    const fixture = TestBed.createComponent(AppShellComponent); fixture.detectChanges();
+    const links = Array.from(fixture.nativeElement.querySelectorAll('nav a')) as HTMLAnchorElement[];
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['/projects', '/projects/list', '/repositories', '/projects/new']);
+  });
+
+  for (const [url, destination, section] of [
+    ['/projects?project=7#summary', '/projects', 'Home'],
+    ['/projects/list?page=2#items', '/projects/list', 'Meus projetos'],
+    ['/projects/7', '/projects/list', 'Detalhe do projeto'],
+    ['/projects/7/edit', '/projects/list', 'Editar projeto'],
+    ['/projects/7/members', '/projects/list', 'Membros do projeto'],
+    ['/repositories?search=dev', '/repositories', 'Meus repositórios'],
+    ['/projects/new', '/projects/new', 'Novo projeto']
+  ]) {
+    it(`activates only the correct sidebar destination for ${url}`, () => {
+      spyOnProperty(TestBed.inject(Router), 'url', 'get').and.returnValue(url);
+      const fixture = TestBed.createComponent(AppShellComponent); fixture.detectChanges();
+      const active = fixture.nativeElement.querySelectorAll('nav a.active');
+      expect(active.length).toBe(1);
+      expect(active[0].getAttribute('href')).toBe(destination);
+      expect(active[0].getAttribute('aria-current')).toBe('page');
+      expect(fixture.componentInstance.section).toBe(section);
+      fixture.componentInstance.menuOpen = true; fixture.componentInstance.closeMenus();
+      expect(fixture.componentInstance.menuOpen).toBeFalse();
+    });
+  }
 });

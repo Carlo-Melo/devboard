@@ -1,0 +1,7 @@
+<a class="project-card" [routerLink]="['/projects', project.id]">
+  <div class="project-card-header"><span class="project-symbol">{{ project.name.slice(0, 2).toUpperCase() }}</span><span class="project-arrow" aria-hidden="true">↗</span></div>
+  <h2>{{ project.name }}</h2>
+  <p>{{ project.description || 'Um espaço para suas próximas entregas.' }}</p>
+  <div class="project-card-meta"><span>{{ project.memberCount + 1 }} pessoas</span><span class="pill">{{ project.boardCount }} quadros · {{ project.githubBoardCount }} com GitHub</span></div>
+  <span class="project-updated">Atualizado em {{ project.updatedAt | date:'dd/MM/yyyy' }}</span>
+</a>

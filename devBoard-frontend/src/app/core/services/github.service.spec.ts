@@ -21,6 +21,12 @@ describe('GithubService', () => {
     service.repositories('api').subscribe();
     const r = http.expectOne(`${environment.apiUrl}/github-repos?search=api`); r.flush([]);
   });
+  it('loads paginated repositories available to the connected account', () => {
+    service.availableRepositories('api', 2, 4).subscribe();
+    const r = http.expectOne(`${environment.apiUrl}/github-repos/available?search=api&page=2&size=4`);
+    expect(r.request.method).toBe('GET');
+    r.flush({content:[],page:2,size:4,totalElements:0,totalPages:0,first:false,last:true});
+  });
   it('unlinks only the selected board', () => {
     service.unlink(9).subscribe(); const r = http.expectOne(`${environment.apiUrl}/boards/9/link-github`);
     expect(r.request.method).toBe('DELETE'); r.flush(null);

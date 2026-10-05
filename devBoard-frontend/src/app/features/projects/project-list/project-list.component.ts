@@ -1,80 +1,61 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
-import { ProjectService } from '../../../core/services/project.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { BehaviorSubject, catchError, of, switchMap } from 'rxjs';
 import { ProjectSummaryResponse } from '../../../core/models/project.models';
-import { UserResponse } from '../../../core/models/auth.models';
+import { ProjectService } from '../../../core/services/project.service';
+import { ProjectCardComponent } from '../project-card/project-card.component';
 
 @Component({
   selector: 'app-project-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ProjectCardComponent],
   templateUrl: './project-list.component.html',
   styleUrl: './project-list.component.scss'
 })
 export class ProjectListComponent implements OnInit {
-
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly pageRequest$ = new BehaviorSubject(0);
+  readonly pageSize = 12;
   projects: ProjectSummaryResponse[] = [];
-  currentUser: UserResponse | null = null;
-  isLoading = true;
-  errorMessage: string | null = null;
-
   page = 0;
   totalPages = 0;
   totalElements = 0;
-  readonly pageSize = 12;
+  isLoading = true;
+  errorMessage: string | null = null;
 
-  constructor(
-    private projectService: ProjectService,
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  constructor(private projectService: ProjectService) {}
 
   ngOnInit(): void {
-    this.loadProjects();
-    this.authService.getMe().subscribe({
-      next: (user) => this.currentUser = user,
-      error: () => {}
-    });
-  }
-
-  loadProjects(): void {
-    this.isLoading = true;
-    this.errorMessage = null;
-
-    this.projectService.list(false, this.page, this.pageSize).subscribe({
-      next: (response) => {
-        this.projects = response.content;
-        this.totalPages = response.totalPages;
-        this.totalElements = response.totalElements;
-        this.isLoading = false;
-      },
-      error: () => {
-        this.errorMessage = 'Não foi possível carregar os projetos.';
-        this.isLoading = false;
+    this.pageRequest$.pipe(
+      switchMap(page => {
+        this.isLoading = true;
+        this.errorMessage = null;
+        return this.projectService.list(false, page, this.pageSize).pipe(
+          catchError(() => {
+            this.errorMessage = 'Não foi possível carregar os projetos.';
+            return of(null);
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(result => {
+      if (result) {
+        this.projects = result.content;
+        this.page = result.page;
+        this.totalPages = result.totalPages;
+        this.totalElements = result.totalElements;
       }
+      this.isLoading = false;
     });
   }
 
+  loadProjects(): void { this.pageRequest$.next(this.page); }
   nextPage(): void {
-    if (this.page + 1 < this.totalPages) {
-      this.page++;
-      this.loadProjects();
-    }
+    if (!this.isLoading && this.page + 1 < this.totalPages) this.pageRequest$.next(this.page + 1);
   }
-
   previousPage(): void {
-    if (this.page > 0) {
-      this.page--;
-      this.loadProjects();
-    }
-  }
-
-  logout(): void {
-    this.authService.logout().subscribe({
-      next: () => this.router.navigateByUrl('/login'),
-      error: () => this.router.navigateByUrl('/login')
-    });
+    if (!this.isLoading && this.page > 0) this.pageRequest$.next(this.page - 1);
   }
 }
