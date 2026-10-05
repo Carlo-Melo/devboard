@@ -56,6 +56,7 @@ describe('ProjectFormComponent', () => {
     fixture.componentInstance.onSubmit();
 
     expect(projectServiceSpy.create).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.cancelLink).toEqual(['/projects/list']);
   });
 
   it('should create a project and navigate to its detail page', async () => {
@@ -93,6 +94,7 @@ describe('ProjectFormComponent', () => {
 
     expect(fixture.componentInstance.isEditMode).toBeTrue();
     expect(fixture.componentInstance.form.value.name).toBe('Projeto Existente');
+    expect(fixture.componentInstance.cancelLink).toEqual(['/projects', 1]);
   });
 
   it('should call update instead of create in edit mode', async () => {

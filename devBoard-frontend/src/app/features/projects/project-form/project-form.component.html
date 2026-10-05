@@ -1,7 +1,7 @@
 <div class="page">
   <div class="page-container page-container-narrow">
 
-    <a routerLink="/projects" class="back-link">&larr; Voltar para projetos</a>
+    <a routerLink="/projects/list" class="back-link">&larr; Voltar para projetos</a>
 
     <div class="card"><p class="eyebrow">ESPAÇO PARA SUAS IDEIAS</p>
       <h1 class="card-title">{{ isEditMode ? 'Editar projeto' : 'Novo projeto' }}</h1>
@@ -31,7 +31,7 @@
           <button type="submit" class="btn-primary" [disabled]="isSaving">
             {{ isSaving ? 'Salvando...' : (isEditMode ? 'Salvar alterações' : 'Criar projeto') }}
           </button>
-          <a routerLink="/projects" class="btn-secondary">Cancelar</a>
+          <a [routerLink]="cancelLink" class="btn-secondary">Cancelar</a>
         </div>
       </form>
     </div>
