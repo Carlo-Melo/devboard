@@ -49,6 +49,7 @@ public class TaskCommentService {
     public CommentResponse create(Long taskId, CreateCommentRequest request, Long userId) {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireRole(task.resolveProjectId(), userId, ProjectRole.VIEWER);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
@@ -68,6 +69,7 @@ public class TaskCommentService {
     public PageResponse<CommentResponse> list(Long taskId, int page, int size, Long userId) {
         Task task = findTaskOrThrow(taskId);
         permissionService.requireRole(task.resolveProjectId(), userId, ProjectRole.VIEWER);
+        permissionService.requireActiveBoard(task.getColumn().getBoard());
 
         int clampedSize = Math.min(size, MAX_PAGE_SIZE) <= 0 ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
         PageRequest pageRequest = PageRequest.of(Math.max(page, 0), clampedSize, Sort.by(Sort.Direction.ASC, "createdAt"));
@@ -79,6 +81,8 @@ public class TaskCommentService {
     @Transactional
     public CommentResponse update(Long commentId, UpdateCommentRequest request, Long userId) {
         TaskComment comment = findCommentOrThrow(commentId);
+        permissionService.requireRole(comment.getTask().resolveProjectId(), userId, ProjectRole.VIEWER);
+        permissionService.requireActiveBoard(comment.getTask().getColumn().getBoard());
 
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new AccessDeniedException("Apenas o autor pode editar o comentário");
@@ -93,10 +97,9 @@ public class TaskCommentService {
     @Transactional
     public void delete(Long commentId, Long userId) {
         TaskComment comment = findCommentOrThrow(commentId);
-
-        if (!comment.getAuthor().getId().equals(userId)) {
-            permissionService.requireRole(comment.getTask().resolveProjectId(), userId, ProjectRole.ADMIN);
-        }
+        permissionService.requireRole(comment.getTask().resolveProjectId(), userId,
+                comment.getAuthor().getId().equals(userId) ? ProjectRole.VIEWER : ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(comment.getTask().getColumn().getBoard());
 
         taskCommentRepository.delete(comment);
         log.info("Comentário excluído: id={}, taskId={}, userId={}", commentId, comment.getTask().getId(), userId);

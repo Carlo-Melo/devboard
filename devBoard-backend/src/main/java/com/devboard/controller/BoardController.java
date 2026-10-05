@@ -67,4 +67,22 @@ public class BoardController {
         boardService.deleteBoard(boardId, user.getId());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/api/boards/{boardId}/archive")
+    public ResponseEntity<Void> archive(@PathVariable Long boardId, @AuthenticationPrincipal SecurityUser user) {
+        boardService.archiveBoard(boardId, user.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/api/boards/{boardId}/restore")
+    public ResponseEntity<BoardResponse> restore(@PathVariable Long boardId, @AuthenticationPrincipal SecurityUser user) {
+        return ResponseEntity.ok(boardService.restoreBoard(boardId, user.getId()));
+    }
+
+    @GetMapping("/api/projects/{projectId}/boards/archived")
+    public ResponseEntity<com.devboard.dto.common.PageResponse<BoardResponse>> archived(
+            @PathVariable Long projectId, @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size, @AuthenticationPrincipal SecurityUser user) {
+        return ResponseEntity.ok(boardService.listArchivedBoards(projectId, user.getId(), page, size));
+    }
 }

@@ -97,7 +97,7 @@ class ProjectServiceTest {
         when(projectRepository.save(any(Project.class))).thenReturn(saved);
 
         when(projectMemberRepository.findByProjectId(10L)).thenReturn(List.of());
-        when(boardRepository.findByProjectId(10L)).thenReturn(List.of());
+        when(boardRepository.findByProjectIdAndArchivedFalse(10L)).thenReturn(List.of());
 
         CreateProjectRequest request = new CreateProjectRequest();
         request.setName("Projeto X");
@@ -150,7 +150,7 @@ class ProjectServiceTest {
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
         when(permissionService.resolveRole(10L, 1L)).thenReturn(ProjectRole.ADMIN);
         when(projectMemberRepository.findByProjectId(10L)).thenReturn(List.of());
-        when(boardRepository.findByProjectId(10L)).thenReturn(List.of());
+        when(boardRepository.findByProjectIdAndArchivedFalse(10L)).thenReturn(List.of());
 
         ProjectResponse response = projectService.getById(10L, 1L);
 
@@ -176,7 +176,7 @@ class ProjectServiceTest {
         when(projectRepository.findById(10L)).thenReturn(Optional.of(project));
         when(permissionService.resolveRole(10L, 1L)).thenReturn(ProjectRole.ADMIN);
         when(projectMemberRepository.findByProjectId(10L)).thenReturn(List.of());
-        when(boardRepository.findByProjectId(10L)).thenReturn(List.of());
+        when(boardRepository.findByProjectIdAndArchivedFalse(10L)).thenReturn(List.of());
 
         UpdateProjectRequest request = new UpdateProjectRequest();
         request.setName("Nome novo");

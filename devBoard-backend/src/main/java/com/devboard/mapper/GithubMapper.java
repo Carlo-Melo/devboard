@@ -15,6 +15,10 @@ public class GithubMapper {
                 b.isMoveOnPrMerge(), b.isImportIssues(), b.isCloseIssueOnDone(), b.getBranchPattern());
     }
     public GithubRepoResponse repository(RepositoryData r, boolean linked) {
-        return new GithubRepoResponse(r.id(), r.fullName(), r.description(), r.url(), r.defaultBranch(), linked);
+        return new GithubRepoResponse(r.id(), r.fullName(), r.description(), r.url(), r.defaultBranch(), linked,
+                r.isPrivate());
+    }
+    public com.devboard.dto.board.GithubDestinationResponse destination(Board b) {
+        return new com.devboard.dto.board.GithubDestinationResponse(b.getProject().getId(), b.getProject().getName(), b.getId(), b.getName());
     }
 }

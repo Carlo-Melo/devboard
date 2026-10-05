@@ -44,7 +44,7 @@ class BoardGithubIntegrationTest {
         token = "Bearer " + jwt.generateToken(owner);
         CreateProjectRequest p = new CreateProjectRequest(); p.setName("Projeto " + suffix);
         var created = projects.create(p, owner.getId()); projectId=created.getId(); boardId=created.getBoards().get(0).getId(); repoId=100000L+boardId;
-        when(client.repository("fake-test-token",repoId)).thenReturn(new GithubRepositoryClient.RepositoryData(repoId,"org","repo","org/repo",null,"https://github.com/org/repo","main",true));
+        when(client.repository("fake-test-token",repoId)).thenReturn(new GithubRepositoryClient.RepositoryData(repoId,"org","repo","org/repo",null,"https://github.com/org/repo","main",true,false));
         LinkGithubRequest r = new LinkGithubRequest(); r.setGithubRepoId(repoId); github.link(boardId,r,owner.getId());
     }
     @Test void projetoEBoards_deveRenomearPadraoECriarOutroSemGitHub() {

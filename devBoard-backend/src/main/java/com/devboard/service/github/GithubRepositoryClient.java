@@ -15,14 +15,14 @@ import java.util.*;
 public class GithubRepositoryClient {
     private final ObjectMapper json;
     public record RepositoryData(long id, String owner, String name, String fullName, String description,
-                                 String url, String defaultBranch, boolean writable) {}
+                                 String url, String defaultBranch, boolean writable, boolean isPrivate) {}
     public record LabelData(long id, String name) {}
     @FunctionalInterface private interface ApiCall<T> { T run() throws IOException; }
 
     private <T> T call(ApiCall<T> action) {
         try { return action.run(); }
         catch (HttpException e) {
-            if (e.getResponseCode() == 401) throw new UnauthorizedException("Token GitHub inválido");
+            if (e.getResponseCode() == 401) throw new GithubAuthenticationException("Sua autorização do GitHub expirou. Entre novamente pelo GitHub para reconectar a conta.");
             if (e.getResponseCode() == 403 || e.getResponseCode() == 429) {
                 if (e.getResponseCode() == 429 || (e.getMessage() != null && e.getMessage().toLowerCase(Locale.ROOT).contains("rate limit")))
                     throw new RateLimitExceededException("Limite de chamadas do GitHub atingido", 60);
@@ -38,7 +38,7 @@ public class GithubRepositoryClient {
     }
     private RepositoryData data(GHRepository r) throws IOException {
         return new RepositoryData(r.getId(), r.getOwnerName(), r.getName(), r.getFullName(), r.getDescription(),
-                r.getHtmlUrl().toString(), r.getDefaultBranch(), r.hasPushAccess());
+                r.getHtmlUrl().toString(), r.getDefaultBranch(), r.hasPushAccess(), r.isPrivate());
     }
     public List<RepositoryData> repositories(String token) {
         return call(() -> {
@@ -47,6 +47,7 @@ public class GithubRepositoryClient {
             return result;
         });
     }
+    public String authenticatedLogin(String token) { return call(() -> github(token).getMyself().getLogin()); }
     public RepositoryData repository(String token, long id) { return call(() -> data(github(token).getRepositoryById(id))); }
     public long registerHook(String token, long id, String url, String secret) {
         return call(() -> {
@@ -59,7 +60,7 @@ public class GithubRepositoryClient {
     public void removeHook(String token, long repoId, Long hookId, String url) {
         call(() -> {
             GHRepository repo = github(token).getRepositoryById(repoId);
-            for (GHHook hook : repo.getHooks()) if ((hookId != null && hook.getId() == hookId) || url.equals(hook.getConfig().get("url"))) hook.delete();
+            for (GHHook hook : repo.getHooks()) if (hookId != null ? hook.getId() == hookId : url.equals(hook.getConfig().get("url"))) hook.delete();
             return null;
         });
     }

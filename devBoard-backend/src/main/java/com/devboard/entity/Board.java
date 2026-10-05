@@ -44,8 +44,12 @@ public class Board {
     @Column(name = "is_default", nullable = false)
     private Boolean isDefault = false;
 
+    @Column(nullable = false)
+    private Boolean archived = false;
+    private LocalDateTime archivedAt;
 
-    @Column(name = "github_repo_id", unique = true)
+
+    @Column(name = "github_repo_id")
     private Long githubRepoId;
     private String githubRepoOwner;
     private String githubRepoName;
@@ -60,6 +64,8 @@ public class Board {
     @JoinColumn(name = "github_user_id")
     private User githubUser;
     private Long githubHookId;
+    @Column(nullable = false)
+    private long githubGeneration;
     private boolean githubReauthRequired;
     private boolean moveOnCommit = true;
     private boolean moveOnPrOpen = true;

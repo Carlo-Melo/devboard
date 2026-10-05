@@ -13,4 +13,6 @@
 
     <include file="db/changelog/V6__board_github_domain.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/V7__project_labels_board_mappings.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/V8__archive_boards.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/V9__board_github_generation.sql" relativeToChangelogFile="false"/>
 </databaseChangeLog>

@@ -35,6 +35,7 @@ public class BoardMapper {
                 .name(board.getName())
                 .description(board.getDescription())
                 .defaultBoard(board.getIsDefault())
+                .archived(Boolean.TRUE.equals(board.getArchived())).archivedAt(board.getArchivedAt())
                 .githubRepoId(board.getGithubRepoId()).githubRepoOwner(board.getGithubRepoOwner())
                 .githubRepoName(board.getGithubRepoName()).githubRepoUrl(board.getGithubRepoUrl())
                 .watchedBranches(java.util.List.copyOf(board.getWatchedBranches()))

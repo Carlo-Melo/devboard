@@ -25,6 +25,16 @@ public class PermissionService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository memberRepository;
 
+    /** Call after membership authorization, before reading tasks or changing a board. */
+    public void requireActiveBoard(com.devboard.entity.Board board) {
+        if (Boolean.TRUE.equals(board.getArchived())) {
+            throw new com.devboard.exception.ConflictException("Board arquivado. Acesse o projeto para consultar os boards ativos ou restaurá-lo.");
+        }
+        if (Boolean.TRUE.equals(board.getProject().getArchived())) {
+            throw new com.devboard.exception.ConflictException("Projeto arquivado");
+        }
+    }
+
     /** Papel efetivo do usuário no projeto, ou {@code null} se não houver vínculo. Dono resolve como ADMIN. */
     public ProjectRole resolveRole(Long projectId, Long userId) {
         Project project = projectRepository.findById(projectId)

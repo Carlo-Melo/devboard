@@ -15,6 +15,8 @@ public class BoardResponse {
     private String name;
     private String description;
     private boolean defaultBoard;
+    private boolean archived;
+    private LocalDateTime archivedAt;
     private Long githubRepoId;
     private String githubRepoOwner;
     private String githubRepoName;

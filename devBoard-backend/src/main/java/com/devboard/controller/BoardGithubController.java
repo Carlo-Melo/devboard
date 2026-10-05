@@ -18,6 +18,24 @@ public class BoardGithubController {
     public Callable<List<GithubRepoResponse>> repositories(@AuthenticationPrincipal SecurityUser u, @RequestParam(required=false) String search) {
         return () -> service.repositories(u.getId(), search);
     }
+    @GetMapping("/api/github-repos/public")
+    public Callable<com.devboard.dto.common.PageResponse<GithubRepoResponse>> publicRepositories(
+            @AuthenticationPrincipal SecurityUser u, @RequestParam(required=false) String search,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size) {
+        return () -> service.publicRepositories(u.getId(), search, page, size);
+    }
+    @GetMapping("/api/github-repos/available")
+    public Callable<com.devboard.dto.common.PageResponse<GithubRepoResponse>> availableRepositories(
+            @AuthenticationPrincipal SecurityUser u, @RequestParam(required=false) String search,
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="20") int size) {
+        return () -> service.availableRepositories(u.getId(), search, page, size);
+    }
+    @GetMapping("/api/github-repos/destinations")
+    public com.devboard.dto.common.PageResponse<com.devboard.dto.board.GithubDestinationResponse> destinations(
+            @AuthenticationPrincipal SecurityUser u, @RequestParam(defaultValue="0") int page,
+            @RequestParam(defaultValue="100") int size) {
+        return service.destinations(u.getId(), page, size);
+    }
     @PostMapping("/api/boards/{boardId}/link-github")
     public Callable<GithubSettingsResponse> link(@PathVariable Long boardId, @Valid @RequestBody LinkGithubRequest r, @AuthenticationPrincipal SecurityUser u) {
         return () -> service.link(boardId, r, u.getId());

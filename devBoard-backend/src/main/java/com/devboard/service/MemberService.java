@@ -197,6 +197,7 @@ public class MemberService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quadro não encontrado"));
         Long projectId = board.getProject().getId();
         permissionService.requireRole(projectId, userId, ProjectRole.ADMIN);
+        permissionService.requireActiveBoard(board);
         Project project = board.getProject();
         if (!board.hasGithubRepo()) {
             throw new InvalidRequestException("Quadro não possui repositório GitHub vinculado");

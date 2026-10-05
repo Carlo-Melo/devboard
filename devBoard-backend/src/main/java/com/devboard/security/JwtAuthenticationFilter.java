@@ -28,6 +28,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
+    /**
+     * Endpoints com Callable retornam pela cadeia de segurança em um dispatch ASYNC.
+     * Como a sessão é stateless, o JWT precisa autenticar também essa nova passagem.
+     */
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                      @NonNull HttpServletResponse response,
