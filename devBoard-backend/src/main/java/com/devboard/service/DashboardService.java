@@ -65,4 +65,3 @@ public class DashboardService {
         permissions.requireRole(projectId, userId, ProjectRole.VIEWER);
     }
 }
-
