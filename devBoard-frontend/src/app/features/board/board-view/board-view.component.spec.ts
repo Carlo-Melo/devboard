@@ -16,7 +16,7 @@ describe('BoardViewComponent', () => {
       id: 1,
       projectId: 7,
       name: 'Main Board',
-      defaultBoard: true, watchedBranches: [], defaultBaseBranch: 'main', githubReauthRequired: false,
+      defaultBoard: true, archived: false, watchedBranches: [], defaultBaseBranch: 'main', githubReauthRequired: false,
       columns: [
         { id: 1, name: 'Backlog', position: 0, role: 'BACKLOG', taskCount: 0, tasks: [] },
         { id: 2, name: 'To-Do', position: 1, role: 'TODO', taskCount: 3, wipLimit: 2, tasks: [] }
@@ -55,6 +55,16 @@ describe('BoardViewComponent', () => {
 
     expect(fixture.componentInstance.board?.columns.length).toBe(2);
     expect(fixture.componentInstance.isLoading).toBeFalse();
+  });
+
+  it('shows archived metadata and a project link without a Kanban or task controls', () => {
+    boardServiceSpy.getById.and.returnValue(of(boardResponse({ name: 'Backend', defaultBoard: false, archived: true, columns: [] })));
+    const fixture = createComponent();
+    expect(fixture.nativeElement.textContent).toContain('Board arquivado');
+    expect(fixture.nativeElement.querySelector('a[href="/projects/7"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.board-filters')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[cdkDropList]')).toBeNull();
+    expect(taskServiceSpy.create).not.toHaveBeenCalled();
   });
 
   it('should show a not-found message on 404', () => {

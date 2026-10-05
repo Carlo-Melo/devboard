@@ -85,7 +85,7 @@ export class TaskDetailComponent implements OnInit {
       error: (err: ApiError) => {
         this.errorMessage = err.status === 404
           ? 'Tarefa não encontrada.'
-          : 'Não foi possível carregar a tarefa.';
+          : err.status === 409 ? err.message : 'Não foi possível carregar a tarefa.';
         this.isLoading = false;
       }
     });

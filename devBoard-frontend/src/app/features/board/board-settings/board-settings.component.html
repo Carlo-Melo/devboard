@@ -1,7 +1,8 @@
 <main class="page"><div class="page-container">
   <p class="alert alert-error" role="alert" *ngIf="error">{{ error }}</p>
   <p class="alert" role="status" *ngIf="message">{{ message }}</p>
-  <ng-container *ngIf="board; else loading">
+  <section class="card" *ngIf="board?.archived"><h1>Board arquivado</h1><p>Este board está inativo. Suas tarefas e atividades foram preservadas.</p><a class="btn-primary" [routerLink]="['/projects', board?.projectId]">Ver boards ativos do projeto</a></section>
+  <ng-container *ngIf="board && !board.archived; else loading">
     <a [routerLink]="['/boards', board.id]">← Voltar ao board</a>
     <h1>{{ board.name }} <span class="pill" *ngIf="board.defaultBoard">Padrão</span></h1>
     <p>Organize este board e configure seu repositório GitHub.</p>
@@ -57,5 +58,5 @@
       </form>
     </section>
     <section class="card" *ngIf="canManage"><h2>Excluir board</h2><p>O último board do projeto não pode ser excluído.</p><button class="btn-danger" [disabled]="busy" (click)="deleteBoard()">Excluir board</button></section>
-  </ng-container><ng-template #loading><p *ngIf="!error">Carregando configurações…</p></ng-template>
+  </ng-container><ng-template #loading><p *ngIf="!error && !board">Carregando configurações…</p></ng-template>
 </div></main>

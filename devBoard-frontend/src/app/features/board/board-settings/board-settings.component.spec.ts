@@ -11,7 +11,7 @@ describe('BoardSettingsComponent', () => {
   let boards: jasmine.SpyObj<BoardService>;
   let members: jasmine.SpyObj<MemberService>;
   let projects: jasmine.SpyObj<ProjectService>;
-  const board = { id: 7, projectId: 2, name: 'Backend', defaultBoard: true, columns: [], watchedBranches: [], defaultBaseBranch: 'main', githubReauthRequired: false, createdAt: '', updatedAt: '' };
+  const board = { id: 7, projectId: 2, name: 'Backend', defaultBoard: true, columns: [], archived: false, watchedBranches: [], defaultBaseBranch: 'main', githubReauthRequired: false, createdAt: '', updatedAt: '' };
   beforeEach(async () => {
     github = jasmine.createSpyObj('GithubService', ['settings', 'repositories', 'link', 'unlink', 'sync', 'update']);
     boards = jasmine.createSpyObj('BoardService', ['update', 'delete']);
@@ -26,6 +26,14 @@ describe('BoardSettingsComponent', () => {
     ] }).compileComponents();
   });
   function create() { const f = TestBed.createComponent(BoardSettingsComponent); f.detectChanges(); return f; }
+  it('blocks archived settings and offers a return to the project', () => {
+    github.settings.and.returnValue(of({ board: { ...board, archived: true }, moveOnCommit: true, moveOnPrOpen: true, moveOnPrMerge: true, importIssues: true, closeIssueOnDone: true, branchPattern: 'feature/task-{id}-{title}' }));
+    const fixture = create();
+    expect(fixture.nativeElement.textContent).toContain('Board arquivado');
+    expect(fixture.nativeElement.querySelector('a[href="/projects/2"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('form')).toBeNull();
+    expect(projects.getById).not.toHaveBeenCalled();
+  });
   it('shows the default indicator independently of the board name', () => {
     const f = create(); expect(f.nativeElement.textContent).toContain('Backend'); expect(f.nativeElement.textContent).toContain('Padrão');
   });

@@ -34,6 +34,7 @@ export class BoardSettingsComponent implements OnInit {
   load(id: number) {
     this.github.settings(id).subscribe({ next: s => {
       this.board = s.board;
+      if (s.board.archived) return;
       this.details.patchValue({ name: s.board.name, description: s.board.description ?? '', defaultBoard: s.board.defaultBoard });
       this.settingsForm.patchValue({ ...s, defaultBaseBranch: s.board.defaultBaseBranch, watchedBranches: s.board.watchedBranches.join(', ') });
       this.projects.getById(s.board.projectId).subscribe({ next: p => this.role = p.currentUserRole, error: e => this.fail(e) });

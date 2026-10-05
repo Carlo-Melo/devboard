@@ -19,6 +19,8 @@ export interface BoardResponse {
   name: string;
   description?: string;
   defaultBoard: boolean;
+  archived: boolean;
+  archivedAt?: string;
   githubRepoId?: number;
   githubRepoOwner?: string;
   githubRepoName?: string;

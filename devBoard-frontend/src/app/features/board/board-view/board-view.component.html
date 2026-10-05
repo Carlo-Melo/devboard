@@ -5,7 +5,12 @@
 
     <div class="alert alert-error" role="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
 
-    <ng-container *ngIf="board && !isLoading">
+    <section class="card" *ngIf="board?.archived && !isLoading" aria-labelledby="archived-board-title">
+      <h1 id="archived-board-title">Board arquivado</h1>
+      <p>O board {{ board?.name }} está inativo. Suas tarefas e atividades foram preservadas e estarão disponíveis após a restauração.</p>
+      <a class="btn-primary" [routerLink]="['/projects', board?.projectId]">Ver boards ativos do projeto</a>
+    </section>
+    <ng-container *ngIf="board && !board.archived && !isLoading">
       <a [routerLink]="['/projects', board.projectId]" class="back-link">&larr; Voltar ao projeto</a>
 
       <div class="topbar">
